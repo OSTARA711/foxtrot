@@ -2,6 +2,12 @@
 
 **A Linux-focused, English-US browser built from Mozilla Firefox ESR.**
 
+<p align="center">
+  <img src="browser/branding/foxtrot/content/foxtrot.svg"
+       alt="Foxtrot"
+       width="500">
+</p>
+
 Foxtrot is a customised Firefox Extended Support Release (ESR) source tree, maintained with a focus on Linux desktop systems, English-US localisation, and Debian-based distribution.
 
 The project retains Mozilla's browser engine and upstream source code while introducing its own branding and a streamlined Debian packaging configuration.
