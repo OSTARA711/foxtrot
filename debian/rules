@@ -1,11 +1,12 @@
-#!/usr/bin/make -f
 # File: debian/rules
+#!/usr/bin/make -f
 
 TESTDIR = $(shell dh_testdir || echo no)
 ifeq (,$(TESTDIR))
 include debian/make.mk
-# Use dpkg-buildflags to get build flags, but exclude -g, that is dealt with
-# via configure options.
+
+# Use dpkg-buildflags, excluding -g because debug symbols are controlled
+# through configure options.
 dpkg_buildflags = $(and $(1),$(shell DEB_CFLAGS_MAINT_STRIP="-g" DEB_CXXFLAGS_MAINT_STRIP="-g" dpkg-buildflags --get $(1)))
 $(call lazy,CFLAGS,$$(call dpkg_buildflags,CFLAGS))
 $(call lazy,CXXFLAGS,$$(call dpkg_buildflags,CXXFLAGS))
@@ -18,6 +19,11 @@ $(call lazy,DEB_BUILD_ARCH_BITS,$$(shell dpkg-architecture -qDEB_BUILD_ARCH_BITS
 $(call lazy,DEB_BUILD_ARCH,$$(shell dpkg-architecture -qDEB_BUILD_ARCH))
 $(call lazy,DEB_HOST_ARCH,$$(shell dpkg-architecture -qDEB_HOST_ARCH))
 $(call lazy,DEB_HOST_ARCH_ENDIAN,$$(shell dpkg-architecture -qDEB_HOST_ARCH_ENDIAN))
+
+# Foxtrot supports only amd64 and arm64.
+ifeq (,$(filter $(DEB_HOST_ARCH),amd64 arm64))
+$(error Foxtrot supports only amd64 and arm64; found $(DEB_HOST_ARCH))
+endif
 
 PYTHON := PYTHONDONTWRITEBYTECODE=y python3
 
@@ -42,7 +48,7 @@ $(foreach lib,$(sort $(call uc,$(SYSTEM_LIBS))),$(eval $(call system_lib,$(lib))
 OFFICIAL_BRANDING := browser/branding/official
 MOZILLA_OFFICIAL := 1
 
-# Foxtrot uses its own branding for ESR, Beta and Release builds.
+# Foxtrot retains its own branding for ESR, Beta and Release builds.
 ifneq (,$(filter release beta esr%,$(SHORT_SOURCE_CHANNEL)))
 BRANDING ?= browser/branding/foxtrot
 else
@@ -64,8 +70,7 @@ COMMON_CONFIGURE_FLAGS += --enable-project=$(PRODUCT)
 
 COMMON_CONFIGURE_FLAGS += $(if $(filter $(BRANDING),$(OFFICIAL_BRANDING)),--enable-official-branding,--with-branding=$(BRANDING))
 
-# Define PRODUCT, product and Product variables (replacing product with the
-# actual value of $(PRODUCT))
+# Define PRODUCT, product and Product variables.
 $(PRODUCT) := $(call lc,$(PRODUCT_NAME))
 uc_first = $(strip $(eval __tmp := $(1))$(foreach l,$(letters),$(eval __tmp := $(subst $(l),$(l) ,$(__tmp))))$(call uc,$(firstword $(__tmp)))$(1:$(firstword $(__tmp))%=%))
 DISPLAY_NAME := $(call uc_first,$(PRODUCT_DOWNLOAD_NAME))$(if $(filter %-esr,$(PRODUCT_NAME)), ESR)
@@ -82,21 +87,9 @@ SHARE_DIR := /usr/share/$($(PRODUCT))
 export CARGO_HOME=$(CURDIR)/debian/.cargo
 
 export MOZBUILD_STATE_PATH = $(CURDIR)/debian/.mozbuild
+export MACH_BUILD_PYTHON_NATIVE_PACKAGE_SOURCE = none
 
 LDFLAGS += -Wl,--as-needed
-
-# Disable debug symbols when building on 32-bits machines, because
-# a) the rust compiler can't deal with it in the available address
-# space, and b) the linker can't deal with it in the available address space
-# either.
-ifneq (64,$(DEB_BUILD_ARCH_BITS))
-	CONFIGURE_FLAGS += --disable-debug-symbols
-endif
-# Also disable them on riscv64, because linking takes so long that buildds
-# kill the build after 420 minutes of "inactivity".
-ifeq (riscv64,$(DEB_BUILD_ARCH))
-	CONFIGURE_FLAGS += --disable-debug-symbols
-endif
 
 CONFIGURE_FLAGS += --enable-update-channel=$(CHANNEL)
 
@@ -107,19 +100,18 @@ endif
 ifneq (,$(filter debug,$(DEB_BUILD_OPTIONS)))
 	CONFIGURE_FLAGS += --enable-debug
 endif
-ifneq (,$(filter armel armhf arm64 riscv64,$(DEB_HOST_ARCH)))
+
+# Enable V4L2 on ARM64.
+ifeq (arm64,$(DEB_HOST_ARCH))
 	MOZ_ENABLE_V4L2 = 1
 endif
-ifneq (,$(filter i386 amd64 armel armhf arm64,$(DEB_HOST_ARCH)))
+
+# Crash reporter is supported on both Foxtrot architectures.
+ifneq (,$(filter amd64 arm64,$(DEB_HOST_ARCH)))
 	CRASH_REPORTER = 1
 endif
-ifneq (,$(filter mips%,$(DEB_HOST_ARCH)))
-	CONFIGURE_FLAGS += --disable-webrtc
-endif
-ifneq (,$(filter ppc64,$(DEB_HOST_ARCH)))
-	CONFIGURE_FLAGS += --enable-linker=bfd
-endif
 
+# Debian Trixie uses Clang by default.
 ifeq (default,$(origin CC))
 ifneq (,$(filter-out bullseye bookworm,$(DIST)))
 CC := clang
@@ -131,6 +123,7 @@ CC := gcc
 endif
 endif
 endif
+
 ifeq (default,$(origin CXX))
 ifneq (,$(filter-out bullseye bookworm,$(DIST)))
 CXX := clang++
@@ -143,23 +136,20 @@ endif
 endif
 endif
 
-# When using clang, the build system uses ld.lld instead of BFD ld.
+# When using Clang, the build system uses ld.lld instead of BFD ld.
 ifeq (,$(findstring clang,$(CC)))
-# Reduce memory usage of the linker at the expense of processing time
-# This should help on lower-end architectures like arm and mips, which
-# spend an immense amount of time swapping.
-LDFLAGS += -Wl,--reduce-memory-overheads
-# Work around https://sourceware.org/bugzilla/show_bug.cgi?id=30566
-ifeq (,$(filter i386 amd64 ppc64%,$(DEB_HOST_ARCH)))
-LDFLAGS += -Wl,--no-keep-memory
-endif
-endif
-# Also add execution time and memory usage stats in the logs
-LDFLAGS += -Wl,--stats
+	# Reduce linker memory usage at the expense of processing time.
+	LDFLAGS += -Wl,--reduce-memory-overheads
 
-ifneq (,$(filter mips mipsel,$(DEB_HOST_ARCH)))
-CONFIGURE_FLAGS += --disable-jit
+	# Work around https://sourceware.org/bugzilla/show_bug.cgi?id=30566.
+	# Keep this enabled for ARM64 when using BFD ld.
+	ifeq (arm64,$(DEB_HOST_ARCH))
+		LDFLAGS += -Wl,--no-keep-memory
+	endif
 endif
+
+# Add execution-time and memory-usage statistics to the logs.
+LDFLAGS += -Wl,--stats
 
 RUSTFLAGS = --remap-path-prefix=$(CURDIR)=.
 
@@ -170,33 +160,39 @@ IN_FILES := $(wildcard debian/*.in)
 ifeq ($(PRODUCT_NAME),firefox)
 IN_FILES := $(filter-out debian/browser.preinst.in debian/browser.postrm.in debian/$($(PRODUCT)).in,$(IN_FILES))
 endif
+
 preprocessed_filename = $(subst $(PRODUCT),$($(PRODUCT)),$(subst GRE_VERSION,$(GRE_VERSION),$(1:.in=)))
+
 define preprocess
 $(call preprocessed_filename,$(1)): $(1)
 PREPROCESSED_FILES += $(call preprocessed_filename,$(1))
 endef
+
 $(foreach f,$(IN_FILES),$(eval $(call preprocess, $(f))))
 
 # Foxtrot ships only the built-in en-US locale.
 GENERATED_FILES += $(PREPROCESSED_FILES)
 debian/control: debian/rules debian/changelog
 
-$(call lazy,LIBAVCODEC,$$(shell awk -F\" '/libavcodec\.so\./ { sub(/libavcodec\.so\./,"", $$$$2); p = "libavcodec" $$$$2 " | libavcodec-extra" $$$$2; if (d) { d = d " | " p } else { d = p } } END { print d }' dom/media/platforms/ffmpeg/FFmpegRuntimeLinker.cpp))
+# ESR153 obtains the FFmpeg major version from FFmpegLibWrapper.h.
+$(call lazy,LIBAVCODEC,$$(shell sed 's/" FFMPEG_MAX_MAJOR_VERSION_STR(FFMPEG_MAX_MAJOR_VERSION)/$$(shell awk '/#define FFMPEG_MAX_MAJOR_VERSION /{print $$$$3}' dom/media/platforms/ffmpeg/FFmpegLibWrapper.h)"/' dom/media/platforms/ffmpeg/FFmpegRuntimeLinker.cpp | awk -F\" '/libavcodec\.so\./ { sub(/libavcodec\.so\./,"", $$$$2); p = "libavcodec" $$$$2 " | libavcodec-extra" $$$$2; if (d) { d = d " | " p } else { d = p } } END { print d }'))
 
 $(PREPROCESSED_FILES): stamps/mozbuild-state
+
 stamps/mozbuild-state::
-	MOZ_OBJDIR=debian/objdir MACH_BUILD_PYTHON_NATIVE_PACKAGE_SOURCE=none $(PYTHON) ./mach python --virtualenv build -c ""
+	MOZ_OBJDIR=debian/objdir $(PYTHON) ./mach python --virtualenv build -c ""
 
 $(PREPROCESSED_FILES): VARS = GRE_VERSION PRODUCT_DOWNLOAD_NAME $(PRODUCT) $(call uc,$(PRODUCT)) $(Product) MOZ_APP_REMOTINGNAME $(SYSTEM_LIBS_VARS) SHORT_SOURCE_CHANNEL DIST MOZ_ENABLE_V4L2 CRASH_REPORTER DEB_HOST_ARCH DEB_HOST_ARCH_ENDIAN
+
 debian/control: VARS += PRODUCT LIBAVCODEC
+
 $(PREPROCESSED_FILES):
-	MOZ_OBJDIR=debian/objdir MACH_BUILD_PYTHON_NATIVE_PACKAGE_SOURCE=none $(PYTHON) ./mach python --virtualenv build python/mozbuild/mozbuild/preprocessor.py --marker % -Fsubstitution $(foreach var,$(VARS),-D$(var)="$($(var))" )$< -o $@
+	MOZ_OBJDIR=debian/objdir $(PYTHON) ./mach python --virtualenv build python/mozbuild/mozbuild/action/preprocessor.py --marker % -Fsubstitution $(foreach var,$(VARS),-D$(var)="$($(var))" )$< -o $@
 
 override_dh_auto_configure:
 
 stamps/configure-check-$(PRODUCT):: stamps/configure-$(PRODUCT)
-# Ensure --{with,enable}-system options properly set expected variables
-# according to the definitions in the mozconfig file.
+	# Ensure --with-system and --enable-system options set the expected variables.
 	@awk -F' *# *| *$$' ' \
 	BEGIN { confs="$(foreach f,autoconf.mk emptyvars.mk,$(CURDIR)/build-$(PRODUCT)/config/$(f))" } \
 	$$1 ~ /system-/ { \
@@ -216,16 +212,6 @@ stamps/configure-check-$(PRODUCT):: stamps/configure-$(PRODUCT)
 	END { if (error) { exit 1 }}' debian/$($(PRODUCT)).mozconfig
 
 stamps/configure-$(PRODUCT):: debian/$($(PRODUCT)).mozconfig stamps/mozbuild-state
-ifeq (armhf,$(DEB_BUILD_ARCH))
-ifeq (,$(shell grep -l cpu:type:aarch64 /sys/devices/system/cpu/modalias))
-	# There is not enough memory in armhf userspace with a 32-bits kernel.
-	$(error Unfortunately cannot build on armhf. Try a 64-bits kernel)
-endif
-endif
-ifeq (mipsel,$(DEB_BUILD_ARCH))
-	# There is not enough memory in mipsel userspace with neither a 32-bits nor 64-bits kernel.
-	$(error Unfortunately cannot build on mipsel. Try cross-compilation)
-endif
 	$(if $(wildcard build-$(PRODUCT)),,mkdir build-$(PRODUCT))
 	cd build-$(PRODUCT) && \
 	MOZCONFIG=$(CURDIR)/debian/$($(PRODUCT)).mozconfig \
@@ -235,25 +221,19 @@ endif
 		$(COMMON_CONFIGURE_FLAGS) \
 		$(CONFIGURE_FLAGS)
 
-# Use thinLTO on armhf, to stay in the memory budget with an armhf toolchain.
-ifeq (armhf,$(DEB_BUILD_ARCH))
-export DEBIAN_RUST_LTO=-Clto=thin
-endif
-# Building with LTO times out on 390x
-ifeq (s390x,$(DEB_BUILD_ARCH))
-export DEBIAN_RUST_LTO=-Clto=off
-endif
-
 stamps/build-$(PRODUCT):: stamps/configure-check-$(PRODUCT)
 	+dh_auto_build --parallel --builddirectory=build-$(PRODUCT)
+
+# Build only the architecture-dependent Firefox application.
+override_dh_auto_build-arch: stamps/build-$(PRODUCT)
 
 # Foxtrot does not build translated language packs.
 override_dh_auto_build-indep:
 
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
-# Disable tests on stable-security
+# Disable tests on stable-security.
 ifeq (,$(findstring ~deb,$(DEBIAN_RELEASE)))
-# Disable tests until they're fixed
+# Disable tests until they are fixed.
 #include debian/test.mk
 endif
 endif
@@ -262,7 +242,6 @@ override_dh_auto_clean::
 	rm -f $(filter-out debian/control debian/watch,$(GENERATED_FILES))
 	rm -rf stamps l10n $(CARGO_HOME)
 	debian/rules debian/control TESTDIR=
-
 	dh_auto_clean --builddirectory=build-$(PRODUCT)
 	find . -name "*.pyc" -o -name "*.pyo" | xargs --no-run-if-empty rm -f
 	rm -rf debian/objdir $(MOZBUILD_STATE_PATH)
@@ -289,12 +268,16 @@ override_dh_install-arch: stamps/dh_install
 # No architecture-independent language-pack packages are produced.
 override_dh_install-indep:
 
-# Avoid running dwz on platforms where we disable debug info.
-# dwz trips on libxul, after using a lot of memory.
+# Avoid running dwz on platforms where debug info is disabled.
+# dwz uses substantial memory on libxul.
 override_dh_dwz:
 ifeq (,$(filter --disable-debug-symbols,$(CONFIGURE_FLAGS)))
 	dh_dwz -X libxul -X libgkcodecs
 endif
+
+# Preserve the vendored Rust source tree during Debian cleanup.
+override_dh_clean:
+	dh_clean --exclude=third_party/rust
 
 override_dh_strip:
 	dh_strip --dbgsym-migration='$($(PRODUCT))-dbg (<< 49.0-4~)'

@@ -1,3 +1,11 @@
+firefox-esr (153.7.0esr-1~deb13u1+foxtrot1) trixie-security; urgency=medium
+
+  * Rebase Foxtrot on Firefox ESR 153.7.0.
+  * Adopt Debian ESR153 Trixie security packaging as the baseline.
+  * Retain Foxtrot-specific branding and desktop-only customisations.
+
+ -- Saskia Ostermann Toutatis <security@klasker.com>  Thu, 19 Nov 2026 13:29:50 +0000
+
 firefox-esr (140.16.0esr-1) unstable; urgency=medium
 
   * New upstream release.
