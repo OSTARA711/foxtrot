@@ -12,10 +12,10 @@ diff --git a/image/moz.build b/image/moz.build
 index e65c0c0..c1aaad3 100644
 --- a/image/moz.build
 +++ b/image/moz.build
-@@ -7,8 +7,6 @@ DIRS += ["build", "decoders", "encoders", "remote"]
+@@ -7,7 +7,5 @@ DIRS += ["build", "decoders", "encoders", "remote"]
  if CONFIG["MOZ_JXL"]:
      DIRS += ["rust/jxl"]
-
+ 
 -TEST_DIRS += ["test/gtest"]
 -
  if CONFIG["FUZZING_INTERFACES"]:
