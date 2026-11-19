@@ -390,30 +390,6 @@ document.addEventListener("DOMContentLoaded", () => {
     to: todayInMs,
   }).then(createGraph);
 
-  let exitIcon = document.querySelector("#mobile-hanger .exit-icon");
-  // hide the mobile promotion and keep hidden with a pref.
-  exitIcon.addEventListener("click", () => {
-    RPMSetPref("browser.contentblocking.report.show_mobile_app", false);
-    document.getElementById("mobile-hanger").classList.add("hidden");
-  });
-
-  let androidMobileAppLink = document.getElementById(
-    "android-mobile-inline-link"
-  );
-  androidMobileAppLink.href = RPMGetStringPref(
-    "browser.contentblocking.report.mobile-android.url"
-  );
-  androidMobileAppLink.addEventListener("click", () => {
-    document.sendTelemetryEvent("clickMobileAppLink", "android");
-  });
-  let iosMobileAppLink = document.getElementById("ios-mobile-inline-link");
-  iosMobileAppLink.href = RPMGetStringPref(
-    "browser.contentblocking.report.mobile-ios.url"
-  );
-  iosMobileAppLink.addEventListener("click", () => {
-    document.sendTelemetryEvent("clickMobileAppLink", "ios");
-  });
-
   let lockwiseEnabled = RPMGetBoolPref(
     "browser.contentblocking.report.lockwise.enabled",
     true
@@ -435,14 +411,6 @@ document.addEventListener("DOMContentLoaded", () => {
       lockwiseCard.buildContent(data);
     }
 
-    if (
-      RPMGetBoolPref("browser.contentblocking.report.show_mobile_app") &&
-      !data.mobileDeviceConnected
-    ) {
-      document
-        .getElementById("mobile-hanger")
-        .classList.toggle("hidden", false);
-    }
   });
 
   // For tests

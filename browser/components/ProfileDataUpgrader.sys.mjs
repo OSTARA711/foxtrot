@@ -9,8 +9,6 @@ const lazy = {};
 ChromeUtils.defineESModuleGetters(lazy, {
   AddonManager: "resource://gre/modules/AddonManager.sys.mjs",
   FormAutofillUtils: "resource://gre/modules/shared/FormAutofillUtils.sys.mjs",
-  FirefoxBridgeExtensionUtils:
-    "resource:///modules/FirefoxBridgeExtensionUtils.sys.mjs",
   LoginHelper: "resource://gre/modules/LoginHelper.sys.mjs",
   PlacesUIUtils: "resource:///modules/PlacesUIUtils.sys.mjs",
   UrlbarPrefs: "resource:///modules/UrlbarPrefs.sys.mjs",
@@ -675,41 +673,6 @@ export let ProfileDataUpgrader = {
       ]) {
         const filePath = PathUtils.join(PathUtils.profileDir, filename);
         IOUtils.remove(filePath, { ignoreAbsent: true }).catch(console.error);
-      }
-    }
-
-    if (existingDataVersion < 145) {
-      if (AppConstants.platform == "win") {
-        // In Firefox 122, we enabled the firefox and firefox-private protocols.
-        // We switched over to using firefox-bridge and firefox-private-bridge,
-        // but we want to clean up the use of the other protocols.
-        lazy.FirefoxBridgeExtensionUtils.maybeDeleteBridgeProtocolRegistryEntries(
-          lazy.FirefoxBridgeExtensionUtils.OLD_PUBLIC_PROTOCOL,
-          lazy.FirefoxBridgeExtensionUtils.OLD_PRIVATE_PROTOCOL
-        );
-
-        // Clean up the old user prefs from FX 122
-        Services.prefs.clearUserPref(
-          "network.protocol-handler.external.firefox"
-        );
-        Services.prefs.clearUserPref(
-          "network.protocol-handler.external.firefox-private"
-        );
-
-        // In Firefox 126, we switched over to using native messaging so the
-        // protocols are no longer necessary even in firefox-bridge and
-        // firefox-private-bridge form
-        lazy.FirefoxBridgeExtensionUtils.maybeDeleteBridgeProtocolRegistryEntries(
-          lazy.FirefoxBridgeExtensionUtils.PUBLIC_PROTOCOL,
-          lazy.FirefoxBridgeExtensionUtils.PRIVATE_PROTOCOL
-        );
-        Services.prefs.clearUserPref(
-          "network.protocol-handler.external.firefox-bridge"
-        );
-        Services.prefs.clearUserPref(
-          "network.protocol-handler.external.firefox-private-bridge"
-        );
-        Services.prefs.clearUserPref("browser.shell.customProtocolsRegistered");
       }
     }
 

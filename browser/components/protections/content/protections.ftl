@@ -18,7 +18,7 @@ get-vpn-link = Get { -mozilla-vpn-brand-name }
 
 vpn-title-subscribed = VPN: Subscribed
 # Note This text is not being translated, and the <br> will need to be removed if or when it does get translated
-vpn-header-content-subscribed = Using the { -mozilla-vpn-brand-name } encrypts all your traffic and hides your location — on up to 5 devices. Get the most from your subscription — add it from <br> the <a data-l10n-name="vpn-google-playstore-link">Google Play Store</a> or <a data-l10n-name="vpn-app-store-link">Apple App Store</a>.
+vpn-header-content-subscribed = Your { -mozilla-vpn-brand-name } subscription encrypts your traffic and hides your location on up to 5 devices.
 
 vpn-banner-header = Protection that extends beyond the browser
 # Note This text is not being translated, and the <br> will need to be removed if or when it does get translated

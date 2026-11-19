@@ -1,3 +1,5 @@
+# File: browser/modules/moz.build
+
 # -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
@@ -6,12 +8,6 @@
 
 with Files("**"):
     BUG_COMPONENT = ("Firefox", "General")
-
-with Files("FirefoxBridgeExtensionUtils.sys.mjs"):
-    BUG_COMPONENT = ("Firefox", "Shell Integration")
-
-with Files("test/unit/test_FirefoxBridgeExtensionUtils.sys.mjs"):
-    BUG_COMPONENT = ("Firefox", "Shell Integration")
 
 with Files("test/browser/*Telemetry*"):
     BUG_COMPONENT = ("Toolkit", "Telemetry")
@@ -88,10 +84,6 @@ with Files("SitePermissions.sys.mjs"):
 with Files("TransientPrefs.sys.mjs"):
     BUG_COMPONENT = ("Firefox", "Settings UI")
 
-with Files("FilePickerCrashed.sys.mjs"):
-    BUG_COMPONENT = ("Core", "Widget: Win32")
-    SCHEDULES.exclusive = ["windows"]
-
 with Files("WindowsJumpLists.sys.mjs"):
     BUG_COMPONENT = ("Firefox", "Shell Integration")
     SCHEDULES.exclusive = ["windows"]
@@ -126,7 +118,7 @@ EXTRA_JS_MODULES += [
     "ExtensionsUI.sys.mjs",
     "FaviconLoader.sys.mjs",
     "FilterAdult.sys.mjs",
-    "FirefoxBridgeExtensionUtils.sys.mjs",
+    "FilePickerCrashed.sys.mjs",
     "HomePage.sys.mjs",
     "LaterRun.sys.mjs",
     "LinksCache.sys.mjs",
@@ -149,15 +141,3 @@ EXTRA_JS_MODULES += [
 MOZ_SRC_FILES += [
     "ContextId.sys.mjs",
 ]
-
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "windows":
-    EXTRA_JS_MODULES += [
-        "FilePickerCrashed.sys.mjs",
-        "WindowsJumpLists.sys.mjs",
-        "WindowsPreviewPerTab.sys.mjs",
-    ]
-
-    EXTRA_JS_MODULES.backgroundtasks += [
-        "BackgroundTask_install.sys.mjs",
-        "BackgroundTask_uninstall.sys.mjs",
-    ]

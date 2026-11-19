@@ -617,11 +617,6 @@ label[for="tab-cryptominer"]:hover ~ #highlight-hover {
   grid-area: cryptominer;
 }
 
-#mobile-hanger {
-  grid-column: 1;
-  grid-row: 3;
-}
-
 .etp-card {
   margin-top: 31px;
   grid-template-rows: 20% auto auto;
@@ -630,15 +625,13 @@ label[for="tab-cryptominer"]:hover ~ #highlight-hover {
 /* Lockwise Card */
 
 #lockwise-body-content > .no-logins,
-#lockwise-body-content > .has-logins,
-#etp-mobile-content {
+#lockwise-body-content > .has-logins {
   display: grid;
   font-size: 0.875em;
   align-items: center;
 }
 
-#lockwise-body-content > .no-logins,
-#etp-mobile-content {
+#lockwise-body-content > .no-logins {
   grid: 1fr / 1fr 6fr;
 }
 
@@ -647,15 +640,7 @@ label[for="tab-cryptominer"]:hover ~ #highlight-hover {
   grid-gap: 10px;
 }
 
-.mobile-app-icon {
-  height: 56px;
-  width: auto;
-  -moz-context-properties: fill;
-  fill: currentColor;
-}
-
-#lockwise-app-links,
-#mobile-app-links {
+#lockwise-app-links {
   display: block;
 }
 

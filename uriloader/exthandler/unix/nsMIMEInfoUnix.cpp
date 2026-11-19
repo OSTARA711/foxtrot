@@ -20,7 +20,6 @@ nsresult nsMIMEInfoUnix::LoadUriInternal(nsIURI* aURI) {
 }
 
 NS_IMETHODIMP nsMIMEInfoUnix::GetDefaultExecutable(nsIFile** aExecutable) {
-  // This needs to be implemented before FirefoxBridge will work on Linux.
   // To implement this and be consistent, GetHasDefaultHandler and
   // LaunchDefaultWithFile should probably be made to be consistent.
   // Right now, they aren't. GetHasDefaultHandler reports true in cases

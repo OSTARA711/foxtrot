@@ -70,15 +70,12 @@ ChromeUtils.defineESModuleGetters(lazy, {
   ShortcutUtils: "resource://gre/modules/ShortcutUtils.sys.mjs",
   SpecialMessageActions:
     "resource://messaging-system/lib/SpecialMessageActions.sys.mjs",
-  StartupOSIntegration:
-    "moz-src:///browser/components/shell/StartupOSIntegration.sys.mjs",
   TelemetryReportingPolicy:
     "resource://gre/modules/TelemetryReportingPolicy.sys.mjs",
   TRRRacer: "resource:///modules/TRRPerformance.sys.mjs",
   WebChannel: "resource://gre/modules/WebChannel.sys.mjs",
   WebProtocolHandlerRegistrar:
     "resource:///modules/WebProtocolHandlerRegistrar.sys.mjs",
-  WindowsRegistry: "resource://gre/modules/WindowsRegistry.sys.mjs",
   setTimeout: "resource://gre/modules/Timer.sys.mjs",
 });
 
@@ -360,9 +357,6 @@ BrowserGlue.prototype = {
           "os-autostart",
           false
         );
-        if (AppConstants.platform == "win") {
-          lazy.StartupOSIntegration.checkForLaunchOnLogin();
-        }
         break;
       }
     }
@@ -707,7 +701,8 @@ BrowserGlue.prototype = {
 
     let makeWindowPrivate =
       cmdLine.findFlag("private-window", false) != -1 &&
-      lazy.StartupOSIntegration.isPrivateBrowsingAllowedInRegistry();
+      (Services.policies.status <= Ci.nsIEnterprisePolicies.UNINITIALIZED ||
+        Services.policies.isAllowed("privatebrowsing"));
     if (!shouldCreateWindow(makeWindowPrivate)) {
       return;
     }
@@ -859,29 +854,7 @@ BrowserGlue.prototype = {
       Date.now() - lastUse >= OFFER_PROFILE_RESET_INTERVAL_MS
     ) {
       this._resetProfileNotification("unused");
-    } else if (AppConstants.platform == "win" && !disableResetPrompt) {
-      // Check if we were just re-installed and offer Firefox Reset
-      let updateChannel;
-      try {
-        updateChannel = ChromeUtils.importESModule(
-          "resource://gre/modules/UpdateUtils.sys.mjs"
-        ).UpdateUtils.UpdateChannel;
-      } catch (ex) {}
-      if (updateChannel) {
-        let uninstalledValue = lazy.WindowsRegistry.readRegKey(
-          Ci.nsIWindowsRegKey.ROOT_KEY_CURRENT_USER,
-          "Software\\Mozilla\\Firefox",
-          `Uninstalled-${updateChannel}`
-        );
-        let removalSuccessful = lazy.WindowsRegistry.removeRegKey(
-          Ci.nsIWindowsRegKey.ROOT_KEY_CURRENT_USER,
-          "Software\\Mozilla\\Firefox",
-          `Uninstalled-${updateChannel}`
-        );
-        if (removalSuccessful && uninstalledValue == "True") {
-          this._resetProfileNotification("uninstall");
-        }
-      }
+    }
     }
   },
 

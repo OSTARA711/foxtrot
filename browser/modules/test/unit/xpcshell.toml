@@ -15,14 +15,7 @@ prefs = ["browser.contextual-services.contextId.rust-component.enabled=true"]
 
 ["test_FilterAdult.js"]
 
-["test_FirefoxBridgeExtensionUtils.js"]
-run-if = ["os == 'win'"] # Test of a Windows-specific feature
 
-["test_FirefoxBridgeExtensionUtilsNativeManifest.js"]
-run-if = [
-  "os == 'win'",
-  "os == 'mac'",
-]
 
 ["test_HomePage.js"]
 

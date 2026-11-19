@@ -24,23 +24,6 @@ export default class VPNCard {
     vpnLink.addEventListener("click", () => {
       this.doc.sendTelemetryEvent("clickVpnCardLink");
     });
-    let androidVPNAppLink = document.getElementById(
-      "vpn-google-playstore-link"
-    );
-    androidVPNAppLink.href = RPMGetStringPref(
-      "browser.contentblocking.report.vpn-android.url"
-    );
-    androidVPNAppLink.addEventListener("click", () => {
-      document.sendTelemetryEvent("clickVpnAppLinkAndroid");
-    });
-    let iosVPNAppLink = document.getElementById("vpn-app-store-link");
-    iosVPNAppLink.href = RPMGetStringPref(
-      "browser.contentblocking.report.vpn-ios.url"
-    );
-    iosVPNAppLink.addEventListener("click", () => {
-      document.sendTelemetryEvent("clickVpnAppLinkIos");
-    });
-
     const vpnBanner = this.doc.querySelector(".vpn-banner");
     const exitIcon = vpnBanner.querySelector(".exit-icon");
     vpnBannerLink.addEventListener("click", () => {
