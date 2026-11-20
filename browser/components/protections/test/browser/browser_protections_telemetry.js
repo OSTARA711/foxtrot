@@ -61,8 +61,6 @@ add_setup(async function () {
       ["browser.contentblocking.report.tracker.url", ""],
       ["browser.contentblocking.report.fingerprinter.url", ""],
       ["browser.contentblocking.report.cryptominer.url", ""],
-      ["browser.contentblocking.report.mobile-ios.url", ""],
-      ["browser.contentblocking.report.mobile-android.url", ""],
       ["browser.contentblocking.report.monitor.home_page_url", ""],
       ["browser.contentblocking.report.monitor.preferences_url", ""],
       ["browser.contentblocking.report.vpn.url", ""],

@@ -13,7 +13,6 @@ const kPrivilegedAboutPrefs = new Set([
   "testing.allowed-prefs.some-int-pref",
 
   "browser.contentblocking.report.hide_vpn_banner",
-  "browser.contentblocking.report.show_mobile_app",
 ]);
 
 /**
