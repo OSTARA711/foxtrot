@@ -4,7 +4,6 @@
 
 /* eslint-env mozilla/remote-page */
 
-import LockwiseCard from "./lockwise-card.mjs";
 import MonitorCard from "./monitor-card.mjs";
 import ProxyCard from "./proxy-card.mjs";
 import VPNCard from "./vpn-card.mjs";
@@ -389,33 +388,6 @@ document.addEventListener("DOMContentLoaded", () => {
     from: weekAgoInMs,
     to: todayInMs,
   }).then(createGraph);
-
-  let lockwiseEnabled = RPMGetBoolPref(
-    "browser.contentblocking.report.lockwise.enabled",
-    true
-  );
-
-  let lockwiseCard;
-  if (lockwiseEnabled) {
-    const lockwiseUI = document.querySelector(".lockwise-card");
-    lockwiseUI.classList.remove("hidden");
-    lockwiseUI.classList.add("loading");
-
-    lockwiseCard = new LockwiseCard(document);
-    lockwiseCard.init();
-  }
-
-  RPMSendQuery("FetchUserLoginsData", {}).then(data => {
-    if (lockwiseCard) {
-      // Once data for the user is retrieved, display the lockwise card.
-      lockwiseCard.buildContent(data);
-    }
-
-  });
-
-  // For tests
-  const lockwiseUI = document.querySelector(".lockwise-card");
-  lockwiseUI.dataset.enabled = lockwiseEnabled;
 
   let monitorEnabled = RPMGetBoolPref(
     "browser.contentblocking.report.monitor.enabled",

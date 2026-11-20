@@ -9,9 +9,6 @@ const lazy = {};
 ChromeUtils.defineESModuleGetters(lazy, {
   AddonManager: "resource://gre/modules/AddonManager.sys.mjs",
   BrowserUtils: "resource://gre/modules/BrowserUtils.sys.mjs",
-  FXA_PWDMGR_HOST: "resource://gre/modules/FxAccountsCommon.sys.mjs",
-  FXA_PWDMGR_REALM: "resource://gre/modules/FxAccountsCommon.sys.mjs",
-  LoginBreaches: "resource:///modules/LoginBreaches.sys.mjs",
   LoginHelper: "resource://gre/modules/LoginHelper.sys.mjs",
   PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.sys.mjs",
   Region: "resource://gre/modules/Region.sys.mjs",
@@ -156,59 +153,6 @@ export class AboutProtectionsParent extends JSWindowActorParent {
       throw monitorResponse;
     }
     return monitorResponse;
-  }
-
-  /**
-   * Retrieves login data for the user.
-   *
-   * @return {{
-   *            numLogins: Number,
-   *            potentiallyBreachedLogins: Number,
-   *            mobileDeviceConnected: Boolean }}
-   */
-  async getLoginData() {
-    if (gTestOverride && "getLoginData" in gTestOverride) {
-      return gTestOverride.getLoginData();
-    }
-
-    try {
-      if (await lazy.fxAccounts.getSignedInUser()) {
-        await lazy.fxAccounts.device.refreshDeviceList();
-      }
-    } catch (e) {
-      console.error("There was an error fetching login data: ", e.message);
-    }
-
-    const userFacingLogins =
-      Services.logins.countLogins("", "", "") -
-      Services.logins.countLogins(
-        lazy.FXA_PWDMGR_HOST,
-        null,
-        lazy.FXA_PWDMGR_REALM
-      );
-
-    let potentiallyBreachedLogins = null;
-    // Get the stats for number of potentially breached Lockwise passwords
-    // if the Primary Password isn't locked.
-    if (userFacingLogins && Services.logins.isLoggedIn) {
-      const logins = await lazy.LoginHelper.getAllUserFacingLogins();
-      potentiallyBreachedLogins =
-        await lazy.LoginBreaches.getPotentialBreachesByLoginGUID(logins);
-    }
-
-    let mobileDeviceConnected =
-      lazy.fxAccounts.device.recentDeviceList &&
-      lazy.fxAccounts.device.recentDeviceList.filter(
-        device => device.type == "mobile"
-      ).length;
-
-    return {
-      numLogins: userFacingLogins,
-      potentiallyBreachedLogins: potentiallyBreachedLogins
-        ? potentiallyBreachedLogins.size
-        : 0,
-      mobileDeviceConnected,
-    };
   }
 
   /**
@@ -416,9 +360,6 @@ export class AboutProtectionsParent extends JSWindowActorParent {
 
       case "FetchMonitorData":
         return this.getMonitorData();
-
-      case "FetchUserLoginsData":
-        return this.getLoginData();
 
       case "ClearMonitorCache":
         monitorResponse = null;

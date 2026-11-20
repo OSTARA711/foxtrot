@@ -119,10 +119,6 @@ h2 {
   padding-inline-end: 15px;
 }
 
-.lockwise-card.has-logins .wrapper div:nth-child(1) {
-  grid-area: 1 / 1 / 1 / 6;
-}
-
 .card:not(.has-logins) .wrapper div:nth-child(1),
 .etp-card.custom-not-blocking .wrapper div:nth-child(1) {
   grid-area: 1 / 1 / 1 / 5;
@@ -151,13 +147,6 @@ h2 {
 .proxy-card .icon.dark,
 a.hidden,
 .loading .card-body,
-.lockwise-card.hidden,
-#lockwise-body-content .has-logins.hidden,
-#lockwise-body-content .no-logins.hidden,
-.lockwise-card.no-logins #lockwise-how-it-works,
-.lockwise-card.no-logins .lockwise-scanned-wrapper,
-.lockwise-card.no-logins #manage-passwords-button,
-.lockwise-card.has-logins #save-passwords-button,
 .monitor-card.hidden,
 .monitor-card.no-logins .card-body,
 .monitor-card.no-logins #monitor-header-content a,
@@ -622,64 +611,6 @@ label[for="tab-cryptominer"]:hover ~ #highlight-hover {
   grid-template-rows: 20% auto auto;
 }
 
-/* Lockwise Card */
-
-#lockwise-body-content > .no-logins,
-#lockwise-body-content > .has-logins {
-  display: grid;
-  font-size: 0.875em;
-  align-items: center;
-}
-
-#lockwise-body-content > .no-logins {
-  grid: 1fr / 1fr 6fr;
-}
-
-#lockwise-body-content > .has-logins {
-  grid: 1fr 1fr / minmax(70px, auto) 1fr;
-  grid-gap: 10px;
-}
-
-#lockwise-app-links {
-  display: block;
-}
-
-.block {
-  background-color: var(--grey-60);
-  border-radius: 4px;
-  text-align: center;
-  font-size: 1.125em;
-  font-weight: bold;
-  color: #fff;
-  padding: 7px;
-  line-height: 18px;
-}
-
-#lockwise-body-content .has-logins a {
-  margin-inline-start: 10px;
-}
-
-.lockwise-scanned-wrapper {
-  display: grid;
-  grid-template-columns: 24px auto;
-  margin-block-start: 24px;
-  grid-area: 2 / 1 / 2 / 5;
-  padding-bottom: 1.7em;
-}
-
-#lockwise-scanned-text {
-  margin-inline-end: 15px;
-}
-
-#lockwise-scanned-icon {
-  margin-top: 5px;
-}
-
-#manage-passwords-button {
-  grid-area: 2 / 5 / 2 / 7;
-  margin-inline-end: 15px;
-}
-
 .vpn-card.subscribed #get-vpn-link {
   display: none;
 }
@@ -830,7 +761,6 @@ label[for="tab-cryptominer"]:hover ~ #highlight-hover {
   padding: 9px;
 }
 
-.lockwise-card #lockwise-header-content > a,
 .monitor-card #monitor-header-content > a {
   display: block;
   margin-block-start: 5px;
@@ -1010,8 +940,6 @@ label[for="tab-cryptominer"]:hover ~ #highlight-hover {
   outline-offset: var(--in-content-focus-outline-offset);
 }
 
-.monitor-card.loading::after,
-.lockwise-card.loading::after {
   position: absolute;
   height: 110px;
   width: 765px;
@@ -1026,8 +954,6 @@ label[for="tab-cryptominer"]:hover ~ #highlight-hover {
   opacity: var(--protection-report-loader-gradient-opacity);
 }
 
-.monitor-card.loading:dir(rtl)::after,
-.lockwise-card.loading:dir(rtl)::after {
   background-image: linear-gradient(to left, var(--background-color-box) 0%, var(--protection-report-loader-color-stop) 30%, var(--background-color-box) 40%, var(--background-color-box) 100%);
   animation-name: loading-rtl;
 }

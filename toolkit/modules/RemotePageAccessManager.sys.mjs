@@ -219,7 +219,6 @@ export let RemotePageAccessManager = {
         "browser.contentblocking.report.hide_vpn_banner",
       ],
       RPMGetBoolPref: [
-        "browser.contentblocking.report.lockwise.enabled",
         "browser.contentblocking.report.monitor.enabled",
         "privacy.fingerprintingProtection",
         "privacy.socialtracking.block_cookies.enabled",
@@ -238,8 +237,6 @@ export let RemotePageAccessManager = {
         "browser.contentblocking.report.monitor.sign_in_url",
         "browser.contentblocking.report.manage_devices.url",
         "browser.contentblocking.report.proxy_extension.url",
-        "browser.contentblocking.report.lockwise.mobile-android.url",
-        "browser.contentblocking.report.lockwise.mobile-ios.url",
         "browser.contentblocking.report.mobile-ios.url",
         "browser.contentblocking.report.mobile-android.url",
         "browser.contentblocking.report.vpn.url",
@@ -250,7 +247,6 @@ export let RemotePageAccessManager = {
       RPMGetIntPref: ["network.cookie.cookieBehavior"],
       RPMGetFormatURLPref: [
         "browser.contentblocking.report.monitor.how_it_works.url",
-        "browser.contentblocking.report.lockwise.how_it_works.url",
         "browser.contentblocking.report.monitor.preferences_url",
         "browser.contentblocking.report.monitor.home_page_url",
         "browser.contentblocking.report.social.url",

@@ -367,7 +367,6 @@ export default [
       "browser/components/profiles/content/delete-profile-card.mjs",
       "browser/components/profiles/content/edit-profile-card.mjs",
       "browser/components/profiles/content/new-profile-card.mjs",
-      "browser/components/protections/content/lockwise-card.mjs",
       "browser/components/protections/content/monitor-card.mjs",
       "browser/components/protections/content/protections.mjs",
       "browser/components/protections/content/proxy-card.mjs",

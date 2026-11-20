@@ -40,22 +40,6 @@ const TEST_LOGIN2 = new nsLoginInfo(
   "password"
 );
 
-// Used to replace AboutProtectionsHandler.getLoginData in front-end tests.
-const mockGetLoginDataWithSyncedDevices = (
-  mobileDeviceConnected = false,
-  potentiallyBreachedLogins = 0
-) => {
-  return {
-    getLoginData: () => {
-      return {
-        numLogins: Services.logins.countLogins("", "", ""),
-        potentiallyBreachedLogins,
-        mobileDeviceConnected,
-      };
-    },
-  };
-};
-
 // Used to replace AboutProtectionsHandler.getMonitorData in front-end tests.
 const mockGetMonitorData = data => {
   return {

@@ -67,35 +67,6 @@ protections-close-button2 =
   .title = Close
 
 
-lockwise-title = Never forget a password again
-passwords-title-logged-in = Manage your passwords
-passwords-header-content = { -brand-product-name } securely stores your passwords in your browser.
-lockwise-header-content-logged-in = Securely store and sync your passwords to all your devices.
-protection-report-passwords-save-passwords-button = Save passwords
-  .title = Save passwords
-protection-report-passwords-manage-passwords-button = Manage passwords
-  .title = Manage passwords
-
-
-# Variables:
-# $count (Number) - Number of passwords exposed in data breaches.
-lockwise-scanned-text-breached-logins =
-  { $count ->
-      [one] 1 password may have been exposed in a data breach.
-     *[other] { $count } passwords may have been exposed in a data breach.
-  }
-
-# While English doesn't use the number in the plural form, you can add $count to your language
-# if needed for grammatical reasons.
-# Variables:
-# $count (Number) - Number of passwords stored in Lockwise.
-lockwise-scanned-text-no-breached-logins =
-  { $count ->
-     [one] 1 password stored securely.
-    *[other] Your passwords are being stored securely.
-  }
-lockwise-how-it-works-link = How it works
-
 monitor-title = Look out for data breaches
 monitor-link = How it works
 monitor-header-content-no-account = Check { -monitor-brand-name } to see if you’ve been part of a known data breach, and get alerts about new breaches.

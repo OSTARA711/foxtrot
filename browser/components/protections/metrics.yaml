@@ -108,12 +108,7 @@ security.ui.protections:
         type: string
     telemetry_mirror: SecurityUiProtections_Close_ProtectionReport
 
-  click_lw_open_button:
-    type: event
-    description: >
-      User interaction by click events on the protection report.
-      This event was generated to correspond to the Legacy Telemetry event
-      security.ui.protections.click#lw_open_button.
+  click_mtr_about_link:
     bugs: &security_ui_protections_click_bugs
       - https://bugzil.la/1557050
       - https://bugzil.la/1572825
@@ -152,35 +147,6 @@ security.ui.protections:
         description: >
           The category of protections the user is in, standard, strict or custom.
         type: string
-    telemetry_mirror: SecurityUiProtections_Click_LwOpenButton
-
-  click_lw_sync_link:
-    type: event
-    description: >
-      User interaction by click events on the protection report.
-      This event was generated to correspond to the Legacy Telemetry event
-      security.ui.protections.click#lw_sync_link.
-    bugs: *security_ui_protections_click_bugs
-    data_reviews: *security_ui_protections_click_data_reviews
-    notification_emails: *security_ui_protections_click_emails
-    expires: never
-    extra_keys: *security_ui_protections_click_extra
-    telemetry_mirror: SecurityUiProtections_Click_LwSyncLink
-
-  click_lw_about_link:
-    type: event
-    description: >
-      User interaction by click events on the protection report.
-      This event was generated to correspond to the Legacy Telemetry event
-      security.ui.protections.click#lw_about_link.
-    bugs: *security_ui_protections_click_bugs
-    data_reviews: *security_ui_protections_click_data_reviews
-    notification_emails: *security_ui_protections_click_emails
-    expires: never
-    extra_keys: *security_ui_protections_click_extra
-    telemetry_mirror: SecurityUiProtections_Click_LwAboutLink
-
-  click_mtr_about_link:
     type: event
     description: >
       User interaction by click events on the protection report.

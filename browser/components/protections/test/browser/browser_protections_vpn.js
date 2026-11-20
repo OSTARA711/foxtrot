@@ -70,7 +70,6 @@ add_setup(async function () {
   await SpecialPowers.pushPrefEnv({
     set: [
       ["browser.contentblocking.report.monitor.enabled", false],
-      ["browser.contentblocking.report.lockwise.enabled", false],
       ["browser.vpn_promo.enabled", true],
     ],
   });
