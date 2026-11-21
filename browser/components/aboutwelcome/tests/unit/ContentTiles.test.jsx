@@ -2,7 +2,6 @@ import React from "react";
 import { shallow, mount } from "enzyme";
 import { ContentTiles } from "content-src/components/ContentTiles";
 import { ActionChecklist } from "content-src/components/ActionChecklist";
-import { MobileDownloads } from "content-src/components/MobileDownloads";
 import { AboutWelcomeUtils } from "content-src/lib/aboutwelcome-utils.mjs";
 import { GlobalOverrider } from "asrouter/tests/unit/utils";
 
@@ -43,35 +42,25 @@ describe("ContentTiles component", () => {
     ],
   };
 
-  const MOBILE_TILE = {
-    type: "mobile_downloads",
+  const SECOND_TILE = {
+    type: "unknown",
     header: {
-      title: "Mobile Header",
+      title: "Second Header",
       style: {
         backgroundColor: "#e0e0e0",
         border: "1px solid #999",
       },
     },
-    data: {
-      email: {
-        link_text: "Email yourself a link",
-      },
-    },
   };
 
   const TITLE_TILE = {
-    type: "mobile_downloads",
+    type: "unknown",
     title: "Tile Title",
     subtitle: "Tile Subtitle",
-    data: {
-      email: {
-        link_text: "Email yourself a link",
-      },
-    },
   };
 
   const TEST_CONTENT = {
-    tiles: [CHECKLIST_TILE, MOBILE_TILE],
+    tiles: [CHECKLIST_TILE, SECOND_TILE],
   };
 
   beforeEach(() => {
@@ -80,9 +69,6 @@ describe("ContentTiles component", () => {
     setActiveMultiSelect = sandbox.stub();
     setActiveSingleSelectSelection = sandbox.stub();
     globals = new GlobalOverrider();
-    globals.set({
-      AWSendToDeviceEmailsSupported: () => Promise.resolve(),
-    });
     wrapper = shallow(
       <ContentTiles
         content={TEST_CONTENT}
@@ -143,7 +129,7 @@ describe("ContentTiles component", () => {
 
   it("should toggle all tiles and send telemetry when the tiles header is clicked", () => {
     const TEST_CONTENT_HEADER = {
-      tiles: [CHECKLIST_TILE, MOBILE_TILE],
+      tiles: [CHECKLIST_TILE, SECOND_TILE],
       tiles_header: {
         title: "Toggle Tiles Header",
       },
@@ -242,21 +228,6 @@ describe("ContentTiles component", () => {
         },
       },
     ]);
-  });
-
-  it("should render MobileDownloads for 'mobile_downloads' tile type", () => {
-    const secondTileButton = wrapper.find(".tile-header").at(1);
-    assert.ok(secondTileButton.exists(), "Tile header button should exist");
-    secondTileButton.simulate("click");
-
-    const mobileDownloads = wrapper.find(MobileDownloads);
-    assert.ok(mobileDownloads.exists());
-    assert.deepEqual(mobileDownloads.prop("data"), {
-      email: {
-        link_text: "Email yourself a link",
-      },
-    });
-    assert.equal(mobileDownloads.prop("handleAction"), handleAction);
   });
 
   it("should handle a single tile object", () => {
@@ -376,8 +347,6 @@ describe("ContentTiles component", () => {
   });
 
   it("should render title and subtitle if present", () => {
-    sandbox.stub(window, "AWSendToDeviceEmailsSupported").resolves(true);
-
     let TEST_TILE_CONTENT = {
       tiles: [TITLE_TILE],
     };
@@ -412,16 +381,10 @@ describe("ContentTiles component", () => {
   });
 
   it("should render multiple title and subtitles if multiple tiles contain them", () => {
-    sandbox.stub(window, "AWSendToDeviceEmailsSupported").resolves(true);
     const SECOND_TITLE_TILE = {
-      type: "mobile_downloads",
+      type: "unknown",
       title: "Tile Title 2",
       subtitle: "Tile Subtitle 2",
-      data: {
-        email: {
-          link_text: "Email yourself a link",
-        },
-      },
     };
 
     let MULTIPLE_TILES_CONTENT = {

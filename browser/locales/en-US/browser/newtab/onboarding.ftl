@@ -240,11 +240,6 @@ mr2022-onboarding-get-started-primary-button-label = Set up in seconds
 
 mr2022-onboarding-import-primary-button-label-no-attribution = Import from previous browser
 
-## MR2022 Multistage Mobile Download screen strings
-
-mr2022-onboarding-mobile-download-cta-text = Scan the QR code to get { -brand-product-name } for mobile or <a data-l10n-name="download-label">send yourself a download link.</a>
-mr2022-onboarding-no-mobile-download-cta-text = Scan the QR code to get { -brand-product-name } for mobile.
-
 ## MR2022 Upgrade Dialog screens
 ## Pin private window screen shown only for users who don't have Firefox private pinned
 

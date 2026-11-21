@@ -152,9 +152,6 @@ module.exports = function (config) {
               functions: 76.92,
               branches: 74.07,
             },
-            "content-src/components/MobileDownloads.jsx": {
-              branches: 56.25,
-            },
             "content-src/components/Themes.jsx": {
               branches: 50,
             },

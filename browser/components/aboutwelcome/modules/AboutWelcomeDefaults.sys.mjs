@@ -19,7 +19,6 @@ ChromeUtils.defineESModuleGetters(lazy, {
   AddonRepository: "resource://gre/modules/addons/AddonRepository.sys.mjs",
   AttributionCode: "resource:///modules/AttributionCode.sys.mjs",
   AWScreenUtils: "resource:///modules/aboutwelcome/AWScreenUtils.sys.mjs",
-  BrowserUtils: "resource://gre/modules/BrowserUtils.sys.mjs",
 });
 
 const isMSIX =
@@ -889,33 +888,6 @@ function getLocalizedUA(ua) {
   return null;
 }
 
-function prepareMobileDownload(content) {
-  let mobileContent = content?.screens?.find(
-    screen => screen.id === "AW_MOBILE_DOWNLOAD"
-  )?.content;
-
-  if (!mobileContent) {
-    return content;
-  }
-  if (!lazy.BrowserUtils.sendToDeviceEmailsSupported()) {
-    // If send to device emails are not supported for a user's locale,
-    // remove the send to device link and update the screen text
-    delete mobileContent.cta_paragraph.action;
-    mobileContent.cta_paragraph.text = {
-      string_id: "mr2022-onboarding-no-mobile-download-cta-text",
-    };
-  }
-  // Update CN specific QRCode url
-  if (lazy.BrowserUtils.isChinaRepack()) {
-    mobileContent.hero_image.url = `${mobileContent.hero_image.url.slice(
-      0,
-      mobileContent.hero_image.url.indexOf(".svg")
-    )}-cn.svg`;
-  }
-
-  return content;
-}
-
 async function prepareContentForReact(content) {
   const { screens } = content;
 
@@ -985,7 +957,7 @@ async function prepareContentForReact(content) {
     );
   }
 
-  return prepareMobileDownload(content);
+  return content;
 }
 
 export const AboutWelcomeDefaults = {

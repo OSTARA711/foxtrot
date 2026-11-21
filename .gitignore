@@ -378,6 +378,13 @@ toolkit/crashreporter/minidump-analyzer/analyzer-test/target/
 CLAUDE.local.md
 .claude/settings.local.json
 
+# Foxtrot local Mozilla build toolchains (downloaded binaries)
+/cbindgen/
+/clang/
+/node/
+/rustc/
+/sysroot-wasm32-wasi/
+
 # Foxtrot Debian packaging build artefacts
 /debian/.mozbuild/
 /debian/objdir/

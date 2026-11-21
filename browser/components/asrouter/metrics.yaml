@@ -127,7 +127,7 @@ messaging_system:
     lifetime: ping
     description: |
       A string identifier of the message screen id
-      (e.g. AW_MOBILE_DOWNLOAD).
+      A string identifier of the message screen id.
     bugs:
       - https://bugzilla.mozilla.org/show_bug.cgi?id=1867627
     data_reviews:

@@ -14,10 +14,8 @@ import { Search } from "content-src/components/Search/Search";
 import { Sections } from "content-src/components/Sections/Sections";
 import { Logo } from "content-src/components/Logo/Logo";
 import { Weather } from "content-src/components/Weather/Weather";
-import { DownloadModalToggle } from "content-src/components/DownloadModalToggle/DownloadModalToggle";
 import { Notifications } from "content-src/components/Notifications/Notifications";
 import { TopicSelection } from "content-src/components/DiscoveryStreamComponents/TopicSelection/TopicSelection";
-import { DownloadMobilePromoHighlight } from "../DiscoveryStreamComponents/FeatureHighlight/DownloadMobilePromoHighlight";
 import { WallpaperFeatureHighlight } from "../DiscoveryStreamComponents/FeatureHighlight/WallpaperFeatureHighlight";
 import { MessageWrapper } from "content-src/components/MessageWrapper/MessageWrapper";
 
@@ -131,16 +129,12 @@ export class BaseContent extends React.PureComponent {
     this.handleColorModeChange = this.handleColorModeChange.bind(this);
     this.shouldDisplayTopicSelectionModal =
       this.shouldDisplayTopicSelectionModal.bind(this);
-    this.toggleDownloadHighlight = this.toggleDownloadHighlight.bind(this);
-    this.handleDismissDownloadHighlight =
-      this.handleDismissDownloadHighlight.bind(this);
     this.state = {
       fixedSearch: false,
       firstVisibleTimestamp: null,
       colorMode: "",
       fixedNavStyle: {},
       wallpaperTheme: "",
-      showDownloadHighlightOverride: null,
     };
   }
 
@@ -516,23 +510,6 @@ export class BaseContent extends React.PureComponent {
     return messageData?.content?.messageType === componentId;
   }
 
-  toggleDownloadHighlight() {
-    this.setState(prevState => {
-      const override = !(
-        prevState.showDownloadHighlightOverride ??
-        this.shouldShowOMCHighlight("DownloadMobilePromoHighlight")
-      );
-
-      return {
-        showDownloadHighlightOverride: override,
-      };
-    });
-  }
-
-  handleDismissDownloadHighlight() {
-    this.setState({ showDownloadHighlightOverride: false });
-  }
-
   getRGBColors(input) {
     if (input.length !== 7) {
       return [];
@@ -650,25 +627,6 @@ export class BaseContent extends React.PureComponent {
     const { mayHaveSponsoredTopSites } = prefs;
     const supportUrl = prefs["support.url"];
 
-    // Mobile Download Promo Pref Checks
-    const mobileDownloadPromoEnabled = prefs["mobileDownloadModal.enabled"];
-    const mobileDownloadPromoVariantAEnabled =
-      prefs["mobileDownloadModal.variant-a"];
-    const mobileDownloadPromoVariantBEnabled =
-      prefs["mobileDownloadModal.variant-b"];
-    const mobileDownloadPromoVariantCEnabled =
-      prefs["mobileDownloadModal.variant-c"];
-    const mobileDownloadPromoVariantABorC =
-      mobileDownloadPromoVariantAEnabled ||
-      mobileDownloadPromoVariantBEnabled ||
-      mobileDownloadPromoVariantCEnabled;
-    const mobileDownloadPromoWrapperHeightModifier =
-      prefs["weather.display"] === "detailed" &&
-      weatherEnabled &&
-      mayHaveWeather
-        ? "is-tall"
-        : "";
-
     const hasThumbsUpDownLayout =
       prefs["discoverystream.thumbsUpDown.searchTopsitesCompact"];
     const hasThumbsUpDown = prefs["discoverystream.thumbsUpDown.enabled"];
@@ -688,9 +646,6 @@ export class BaseContent extends React.PureComponent {
       DiscoveryStream.feeds.loaded;
 
     const featureClassName = [
-      mobileDownloadPromoEnabled &&
-        mobileDownloadPromoVariantABorC &&
-        "has-mobile-download-promo", // Mobile download promo modal is enabled/visible
       weatherEnabled && mayHaveWeather && "has-weather", // Weather widget is enabled/visible
       prefs.showSearch ? "has-search" : "no-search",
       layoutsVariantAEnabled ? "layout-variant-a" : "", // Layout experiment variant A
@@ -734,12 +689,6 @@ export class BaseContent extends React.PureComponent {
       }
     }
 
-    // If state.showDownloadHighlightOverride has value, let it override the logic
-    // Otherwise, defer to OMC message display logic
-    const shouldShowDownloadHighlight =
-      this.state.showDownloadHighlightOverride ??
-      this.shouldShowOMCHighlight("DownloadMobilePromoHighlight");
-
     return (
       <div className={featureClassName}>
         {/* Floating menu for customize menu toggle */}
@@ -777,32 +726,6 @@ export class BaseContent extends React.PureComponent {
             </ErrorBoundary>
           )}
         </div>
-        <div
-          className={`mobileDownloadPromoWrapper ${mobileDownloadPromoWrapperHeightModifier}`}
-        >
-          {mobileDownloadPromoEnabled && mobileDownloadPromoVariantABorC && (
-            <ErrorBoundary>
-              <DownloadModalToggle
-                isActive={shouldShowDownloadHighlight}
-                onClick={this.toggleDownloadHighlight}
-              />
-              {shouldShowDownloadHighlight && (
-                <MessageWrapper
-                  hiddenOverride={shouldShowDownloadHighlight}
-                  onDismiss={this.handleDismissDownloadHighlight}
-                  dispatch={this.props.dispatch}
-                >
-                  <DownloadMobilePromoHighlight
-                    // Var B layout has the weather right-aligned
-                    position={`${layoutsVariantBEnabled ? "inset-inline-start" : "inset-inline-end"} inset-block-end`}
-                    dispatch={this.props.dispatch}
-                  />
-                </MessageWrapper>
-              )}
-            </ErrorBoundary>
-          )}
-        </div>
-
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions*/}
         <div className={outerClassName} onClick={this.closeCustomizationMenu}>
           <main className="newtab-main" style={this.state.fixedNavStyle}>

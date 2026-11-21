@@ -6,7 +6,6 @@ import React, { useState, useEffect } from "react";
 import { Localized } from "./MSLocalized";
 import { AddonsPicker } from "./AddonsPicker";
 import { SingleSelect } from "./SingleSelect";
-import { MobileDownloads } from "./MobileDownloads";
 import { MultiSelect } from "./MultiSelect";
 import { EmbeddedMigrationWizard } from "./EmbeddedMigrationWizard";
 import { ActionChecklist } from "./ActionChecklist";
@@ -162,12 +161,6 @@ export const ContentTiles = props => {
                   props.setActiveSingleSelectSelection
                 }
                 singleSelectId={`single-select-${index}`}
-              />
-            )}
-            {tile.type === "mobile_downloads" && tile.data && (
-              <MobileDownloads
-                data={tile.data}
-                handleAction={props.handleAction}
               />
             )}
             {tile.type === "multiselect" && tile.data && (

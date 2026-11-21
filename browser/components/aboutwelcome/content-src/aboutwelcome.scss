@@ -678,21 +678,6 @@ html {
           .main-content-inner {
             min-height: 330px;
 
-            .mobile-download-buttons {
-              padding: 0;
-              margin-inline-start: -5px;
-              display: flex;
-
-              button {
-                cursor: pointer;
-              }
-            }
-
-            .qr-code-image {
-              margin: 5px 0 10px;
-              display: flex;
-            }
-
             .language-switcher-container {
               .primary {
                 margin-bottom: 5px;
@@ -2033,58 +2018,6 @@ html {
 
     @media (prefers-contrast) {
       color: var(--in-content-page-color);
-    }
-  }
-
-  .mobile-downloads {
-    .qr-code-image {
-      margin: 24px 0 10px;
-      width: 113px;
-      height: 113px;
-    }
-
-    .email-link {
-      @include text-link-styles;
-
-      font-size: 16px;
-      font-weight: 400;
-
-      &:hover {
-        background: none;
-      }
-    }
-
-    .ios button {
-      background-image: url('chrome://app-marketplace-icons/locale/ios.svg');
-    }
-
-    .android button {
-      background-image: url('chrome://app-marketplace-icons/locale/android.png');
-    }
-  }
-
-  .mobile-download-buttons {
-    list-style: none;
-    padding: 10px 0;
-    margin: 0;
-
-    li {
-      display: inline-block;
-
-      button {
-        display: inline-block;
-        height: 45px;
-        width: 152px;
-        background-repeat: no-repeat;
-        background-size: contain;
-        background-position: center;
-        box-shadow: none;
-        border: 0;
-      }
-
-      &:not(:first-child) {
-        margin-inline: 5px 0;
-      }
     }
   }
 

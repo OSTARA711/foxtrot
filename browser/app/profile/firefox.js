@@ -1743,12 +1743,6 @@ pref("browser.newtab.preload", true);
   pref("browser.preonboarding.enabled", false);
 #endif
 
-// Show "Download Firefox for mobile" QR code modal on newtab
-pref("browser.newtabpage.activity-stream.mobileDownloadModal.enabled", false);
-pref("browser.newtabpage.activity-stream.mobileDownloadModal.variant-a", false);
-pref("browser.newtabpage.activity-stream.mobileDownloadModal.variant-b", false);
-pref("browser.newtabpage.activity-stream.mobileDownloadModal.variant-c", false);
-
 // Show refined card layout on newtab
 pref("browser.newtabpage.activity-stream.discoverystream.refinedCardsLayout.enabled", false);
 

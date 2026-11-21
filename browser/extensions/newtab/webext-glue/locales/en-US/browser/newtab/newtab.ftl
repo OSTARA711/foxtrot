@@ -485,16 +485,6 @@ newtab-custom-wallpaper-title = Custom wallpapers are here
 newtab-custom-wallpaper-subtitle = Upload your own wallpaper or pick a custom color to make { -brand-product-name } yours.
 newtab-custom-wallpaper-cta = Try it
 
-## Strings for download mobile highlight
-
-newtab-download-mobile-highlight-title = Download { -brand-product-name } for mobile
-# "Scan the code" refers to scanning the QR code that appears above the body text that leads to Firefox for mobile download.
-newtab-download-mobile-highlight-body-variant-a = Scan the code to securely browse on the go.
-newtab-download-mobile-highlight-body-variant-b = Pick up where you left off when you sync your tabs, passwords, and more.
-newtab-download-mobile-highlight-body-variant-c = Did you know you can take { -brand-product-name } on the go? Same browser. In your pocket.
-newtab-download-mobile-highlight-image =
-    .aria-label = QR code to download { -brand-product-name } for mobile
-
 ## Strings for reporting ads and content
 
 newtab-report-content-why-reporting-this =
