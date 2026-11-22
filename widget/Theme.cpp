@@ -117,13 +117,6 @@ static StaticRefPtr<Theme> gRDMInstance;
 
 }  // namespace
 
-#ifdef ANDROID
-already_AddRefed<Theme> do_CreateNativeThemeDoNotUseDirectly() {
-  // Android doesn't have a native theme.
-  return do_AddRef(new Theme(Theme::ScrollbarStyle()));
-}
-#endif
-
 already_AddRefed<nsITheme> do_GetBasicNativeThemeDoNotUseDirectly() {
   if (MOZ_UNLIKELY(!gNonNativeInstance)) {
     UniquePtr<ScrollbarDrawing> scrollbarDrawing = Theme::ScrollbarStyle();
@@ -1519,8 +1512,6 @@ UniquePtr<ScrollbarDrawing> Theme::ScrollbarStyle() {
   return MakeUnique<ScrollbarDrawingCocoa>();
 #elif MOZ_WIDGET_GTK
   return MakeUnique<ScrollbarDrawingGTK>();
-#elif ANDROID
-  return MakeUnique<ScrollbarDrawingAndroid>();
 #else
 #  error "Unknown platform, need scrollbar implementation."
 #endif

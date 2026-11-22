@@ -55,7 +55,7 @@ XPCOM_MANIFESTS += [
     "components.conf",
 ]
 
-if toolkit in ("android", "cocoa", "gtk", "uikit", "windows"):
+if toolkit in ("cocoa", "gtk", "uikit", "windows"):
     DIRS += [toolkit]
 
 if toolkit == "cocoa":
@@ -91,7 +91,7 @@ elif toolkit == "windows":
         "nsIWindowsUIUtils.idl",
         "nsIWinTaskbar.idl",
     ]
-elif toolkit in ("android", "uikit"):
+elif toolkit == "uikit":
     XPIDL_SOURCES += [
         "nsIGeckoViewBridge.idl",
     ]
@@ -328,7 +328,7 @@ EXPORTS.ipc = [
 if CONFIG["MOZ_X11"] or CONFIG["MOZ_WAYLAND"]:
     DIRS += ["x11"]
 
-if toolkit in {"gtk", "cocoa", "windows", "android", "uikit"}:
+if toolkit in {"gtk", "cocoa", "windows", "uikit"}:
     UNIFIED_SOURCES += [
         "nsBaseFilePicker.cpp",
     ]
@@ -338,7 +338,7 @@ if toolkit in {"gtk", "cocoa", "windows"}:
         "nsBaseColorPicker.cpp",
     ]
 
-if toolkit in ("gtk", "windows", "cocoa", "uikit", "android"):
+if toolkit in ("gtk", "windows", "cocoa", "uikit"):
     UNIFIED_SOURCES += [
         "nsNativeTheme.cpp",
     ]
@@ -376,12 +376,6 @@ elif CONFIG["MOZ_WIDGET_TOOLKIT"] == "gtk":
     IPDL_SOURCES = [
         "gtk/PCompositorWidget.ipdl",
         "gtk/PlatformWidgetTypes.ipdlh",
-        "headless/HeadlessWidgetTypes.ipdlh",
-    ]
-elif toolkit == "android":
-    IPDL_SOURCES = [
-        "android/PCompositorWidget.ipdl",
-        "android/PlatformWidgetTypes.ipdlh",
         "headless/HeadlessWidgetTypes.ipdlh",
     ]
 else:

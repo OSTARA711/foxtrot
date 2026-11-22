@@ -11,7 +11,7 @@
 def updater_default(build_project, target):
     if build_project == "tools/update-programs":
         return True
-    return build_project != "mobile/android" and target.os != "iOS"
+    return target.os != "iOS"
 
 
 option(

@@ -2,12 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { AppConstants } from "resource://gre/modules/AppConstants.sys.mjs";
-
 const lazy = {};
 
 ChromeUtils.defineESModuleGetters(lazy, {
-  GeckoViewAutocomplete: "resource://gre/modules/GeckoViewAutocomplete.sys.mjs",
   clearTimeout: "resource://gre/modules/Timer.sys.mjs",
   setTimeout: "resource://gre/modules/Timer.sys.mjs",
 });
@@ -371,8 +368,7 @@ export class AutoCompleteParent extends JSWindowActorParent {
     let browser = this.browsingContext.top.embedderElement;
 
     if (
-      !browser ||
-      (!AppConstants.MOZ_GECKOVIEW && !browser.autoCompletePopup)
+      !browser || !browser.autoCompletePopup
     ) {
       // If there is no browser or popup, just make sure that the popup has been closed.
       if (this.openedPopup) {
@@ -406,23 +402,14 @@ export class AutoCompleteParent extends JSWindowActorParent {
       }
 
       case "AutoComplete:MaybeOpenPopup": {
-        let { results, rect, dir, inputElementIdentifier, formOrigin } =
+        let { results, rect, dir, inputElementIdentifier } =
           message.data;
-        if (AppConstants.MOZ_GECKOVIEW) {
-          lazy.GeckoViewAutocomplete.delegateSelection({
-            browsingContext: this.browsingContext,
-            options: results,
-            inputElementIdentifier,
-            formOrigin,
-          });
-        } else {
-          this.showPopupWithResults({ results, rect, dir });
-          this.notifyListeners();
+        this.showPopupWithResults({ results, rect, dir });
+        this.notifyListeners();
 
-          this.notifyAutoCompletePopupOpened(
-            JSON.stringify(inputElementIdentifier)
-          );
-        }
+        this.notifyAutoCompletePopupOpened(
+          JSON.stringify(inputElementIdentifier)
+        );
         break;
       }
 
@@ -433,10 +420,6 @@ export class AutoCompleteParent extends JSWindowActorParent {
       }
 
       case "AutoComplete:ClosePopup": {
-        if (AppConstants.MOZ_GECKOVIEW) {
-          lazy.GeckoViewAutocomplete.delegateDismiss();
-          break;
-        }
         this.closePopup();
         break;
       }

@@ -148,8 +148,6 @@ export var AppConstants = Object.freeze({
 
   MOZ_WEBEXT_WEBIDL_ENABLED: @MOZ_WEBEXT_WEBIDL_ENABLED_BOOL@,
 
-  MOZ_GECKOVIEW_HISTORY: @MOZ_GECKOVIEW_HISTORY_BOOL@,
-
   MOZ_GECKO_PROFILER: @MOZ_GECKO_PROFILER_BOOL@,
 
   BROWSER_NEWTAB_AS_ADDON: @BROWSER_NEWTAB_AS_ADDON_BOOL@,
@@ -258,13 +256,6 @@ export var AppConstants = Object.freeze({
   "@DLL_PREFIX@nss3@DLL_SUFFIX@",
 #else
   "@DLL_PREFIX@mozsqlite3@DLL_SUFFIX@",
-#endif
-
-  MOZ_GECKOVIEW:
-#ifdef MOZ_GECKOVIEW
-    true,
-#else
-    false,
 #endif
 
   USE_LIBZ_RS: @USE_LIBZ_RS_BOOL@,

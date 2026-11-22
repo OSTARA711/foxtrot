@@ -102,7 +102,6 @@ export const AppConstants: Readonly<{
 
   MENUBAR_CAN_AUTOHIDE: boolean;
 
-  MOZ_GECKOVIEW_HISTORY: boolean;
 
   MOZ_GECKO_PROFILER: boolean;
 
@@ -171,9 +170,6 @@ export const AppConstants: Readonly<{
   MOZ_SELECTABLE_PROFILES: boolean;
 
   SQLITE_LIBRARY_FILENAME: string;
-
-  // #ifdef MOZ_GECKOVIEW
-  MOZ_GECKOVIEW: boolean;
 
   // Returns true for CN region build when distibution id set as 'MozillaOnline'
   isChinaRepack(): boolean;

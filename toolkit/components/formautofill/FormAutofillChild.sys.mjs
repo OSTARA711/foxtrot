@@ -501,10 +501,7 @@ export class FormAutofillChild extends JSWindowActorChild {
       return;
     }
 
-    if (
-      AppConstants.MOZ_GECKOVIEW ||
-      !lazy.FormAutofillContent.savedFieldNames
-    ) {
+    if (!lazy.FormAutofillContent.savedFieldNames) {
       this.debug("onFocusIn: savedFieldNames are not known yet");
 
       // Init can be asynchronous because we don't need anything from the parent

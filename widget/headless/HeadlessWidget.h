@@ -26,10 +26,6 @@
 #  define MOZ_HEADLESS_SCROLL_MULTIPLIER 1
 #  define MOZ_HEADLESS_SCROLL_DELTA_MODE \
     mozilla::dom::WheelEvent_Binding::DOM_DELTA_PIXEL
-#elif defined(ANDROID)
-#  define MOZ_HEADLESS_SCROLL_MULTIPLIER 1
-#  define MOZ_HEADLESS_SCROLL_DELTA_MODE \
-    mozilla::dom::WheelEvent_Binding::DOM_DELTA_LINE
 #else
 #  define MOZ_HEADLESS_SCROLL_MULTIPLIER -1
 #  define MOZ_HEADLESS_SCROLL_DELTA_MODE -1

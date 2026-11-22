@@ -151,9 +151,6 @@
 #  include "mozilla/a11y/nsWinUtils.h"
 #endif
 
-#ifdef MOZ_GECKOVIEW_HISTORY
-#  include "GeckoViewHistory.h"
-#endif
 
 #if defined(MOZ_WIDGET_ANDROID)
 #  include "mozilla/widget/nsWindow.h"
@@ -4183,33 +4180,6 @@ mozilla::ipc::IPCResult BrowserParent::RecvVisitURI(
                                 aBrowserId);
   }
   return IPC_OK();
-}
-
-mozilla::ipc::IPCResult BrowserParent::RecvQueryVisitedState(
-    nsTArray<RefPtr<nsIURI>>&& aURIs) {
-#ifdef MOZ_GECKOVIEW_HISTORY
-  nsCOMPtr<IHistory> history = components::History::Service();
-  if (NS_WARN_IF(!history)) {
-    return IPC_OK();
-  }
-  RefPtr<nsIWidget> widget = GetWidget();
-  if (NS_WARN_IF(!widget)) {
-    return IPC_OK();
-  }
-
-  // FIXME(emilio): Is this check really needed?
-  for (nsIURI* uri : aURIs) {
-    if (!uri) {
-      return IPC_FAIL(this, "Received null URI");
-    }
-  }
-
-  auto* gvHistory = static_cast<GeckoViewHistory*>(history.get());
-  gvHistory->QueryVisitedState(widget, Manager(), std::move(aURIs));
-  return IPC_OK();
-#else
-  return IPC_FAIL(this, "QueryVisitedState is Android-only");
-#endif
 }
 
 void BrowserParent::LiveResizeStarted() { SuppressDisplayport(true); }

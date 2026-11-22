@@ -2,12 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { AppConstants } from "resource://gre/modules/AppConstants.sys.mjs";
-
 const lazy = {};
 
 ChromeUtils.defineESModuleGetters(lazy, {
-  EventDispatcher: "resource://gre/modules/Messaging.sys.mjs",
   PlacesUtils: "resource://gre/modules/PlacesUtils.sys.mjs",
   PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.sys.mjs",
 });
@@ -126,14 +123,6 @@ PushRecord.prototype = {
       // If the registration isn't subject to quota, or the user already
       // has the site open, skip expensive database queries.
       return Date.now();
-    }
-
-    if (AppConstants.MOZ_GECKOVIEW_HISTORY) {
-      let result = await lazy.EventDispatcher.instance.sendRequestForResult({
-        type: "History:GetPrePathLastVisitedTimeMilliseconds",
-        prePath: this.uri.prePath,
-      });
-      return result == 0 ? -Infinity : result;
     }
 
     // Places History transition types that can fire a

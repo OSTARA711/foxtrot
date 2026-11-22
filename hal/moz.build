@@ -32,22 +32,7 @@ SOURCES += [
     "Hal.cpp",
 ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "android":
-    LOCAL_INCLUDES += [
-        "/widget/android",
-    ]
-    UNIFIED_SOURCES += [
-        "android/AndroidHapticFeedback.cpp",
-        "android/AndroidHeterogeneousCpuInfo.cpp",
-        "android/AndroidPerformanceHintManager.cpp",
-        "android/AndroidProcessPriority.cpp",
-        "android/AndroidSensor.cpp",
-    ]
-    # AndroidHal.cpp cannot be built in unified mode because it relies on HalImpl.h.
-    SOURCES += [
-        "android/AndroidHal.cpp",
-    ]
-elif CONFIG["OS_TARGET"] == "Linux":
+if CONFIG["OS_TARGET"] == "Linux":
     UNIFIED_SOURCES += [
         "fallback/FallbackHeterogeneousCpuInfo.cpp",
         "fallback/FallbackScreenConfiguration.cpp",
@@ -110,12 +95,11 @@ else:
     ]
 
 # Fallbacks for backends implemented on Android only.
-if CONFIG["MOZ_WIDGET_TOOLKIT"] != "android":
-    UNIFIED_SOURCES += [
-        "fallback/FallbackHapticFeedback.cpp",
-        "fallback/FallbackNetwork.cpp",
-        "fallback/FallbackPerformanceHintManager.cpp",
-    ]
+UNIFIED_SOURCES += [
+    "fallback/FallbackHapticFeedback.cpp",
+    "fallback/FallbackNetwork.cpp",
+    "fallback/FallbackPerformanceHintManager.cpp",
+]
 
 if CONFIG["MOZ_WIDGET_TOOLKIT"] == "cocoa":
     UNIFIED_SOURCES += [

@@ -754,9 +754,6 @@ class BrowserParent final : public PBrowserParent,
                                        const uint32_t& aFlags,
                                        const uint64_t& aBrowserId);
 
-  mozilla::ipc::IPCResult RecvQueryVisitedState(
-      nsTArray<RefPtr<nsIURI>>&& aURIs);
-
   mozilla::ipc::IPCResult RecvMaybeFireEmbedderLoadEvents(
       EmbedderElementEventType aFireEventAtEmbeddingElement);
 

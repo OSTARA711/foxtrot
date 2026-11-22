@@ -258,7 +258,7 @@ def bindgen_config_paths(clang, libclang, build_project):
     # Actually, we don't want to force an error if we're not building the
     # browser generally.  We therefore whitelist the projects that require
     # bindgen facilities at this point and leave it at that.
-    if build_project in ("browser", "mobile/android"):
+    if build_project == "browser":
         if not clang:
             die(
                 "Could not find clang to generate run bindings for C/C++. "

@@ -39,11 +39,6 @@
 #include "mozilla/dom/nsCSPContext.h"
 #include "mozilla/dom/WindowGlobalParent.h"
 
-#ifdef MOZ_GECKOVIEW
-#  include "mozilla/dom/Promise-inl.h"
-#  include "nsIGeckoViewServiceWorker.h"
-#  include "nsImportModule.h"
-#endif
 
 namespace mozilla::dom {
 
@@ -206,7 +201,6 @@ struct ClientOpenWindowArgsParsed {
   RefPtr<ThreadsafeContentParentHandle> originContent;
 };
 
-#ifndef MOZ_GECKOVIEW
 void OpenWindow(const ClientOpenWindowArgsParsed& aArgsValidated,
                 nsOpenWindowInfo* aOpenInfo, BrowsingContext** aBC,
                 ErrorResult& aRv) {
@@ -316,56 +310,7 @@ void WaitForLoad(const ClientOpenWindowArgsParsed& aArgsValidated,
       [listener](const CopyableErrorResult& aResult) {});
 }
 
-#ifdef MOZ_GECKOVIEW
-void GeckoViewOpenWindow(const ClientOpenWindowArgsParsed& aArgsValidated,
-                         nsOpenWindowInfo* aOpenInfo, BrowsingContext** aBC,
-                         ErrorResult& aRv) {
-  MOZ_ASSERT(aOpenInfo);
 
-  // passes the request to open a new window to GeckoView. Allowing the
-  // application to decide how to hand the open window request.
-  nsCOMPtr<nsIGeckoViewServiceWorker> sw = do_ImportESModule(
-      "resource://gre/modules/GeckoViewServiceWorker.sys.mjs");
-  MOZ_ASSERT(sw);
-
-  RefPtr<dom::Promise> promise;
-  nsresult rv =
-      sw->OpenWindow(aArgsValidated.uri, aOpenInfo, getter_AddRefs(promise));
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    aRv.Throw(rv);
-    return;
-  }
-
-  promise->AddCallbacksWithCycleCollectedArgs(
-      [](JSContext* aCx, JS::Handle<JS::Value> aValue, ErrorResult& aRv,
-         nsOpenWindowInfo* aOpenWindowInfo) {
-        if (aValue.isNull()) {
-          // nsIBrowsingContextReadyCallback will be called when browsing
-          // context is ready
-          return;
-        }
-
-        auto cancelOpen =
-            MakeScopeExit([&aOpenWindowInfo] { aOpenWindowInfo->Cancel(); });
-
-        RefPtr<BrowsingContext> browsingContext;
-        if (NS_WARN_IF(!aValue.isObject()) ||
-            NS_WARN_IF(NS_FAILED(
-                UNWRAP_OBJECT(BrowsingContext, aValue, browsingContext)))) {
-          return;
-        }
-
-        if (nsIBrowsingContextReadyCallback* callback =
-                aOpenWindowInfo->BrowsingContextReadyCallback()) {
-          callback->BrowsingContextReady(browsingContext);
-        }
-        cancelOpen.release();
-      },
-      [](JSContext* aContext, JS::Handle<JS::Value> aValue, ErrorResult& aRv,
-         nsOpenWindowInfo* aOpenWindowInfo) { aOpenWindowInfo->Cancel(); },
-      RefPtr(aOpenInfo));
-}
-#endif  // MOZ_GECKOVIEW
 
 }  // anonymous namespace
 
@@ -434,12 +379,7 @@ RefPtr<ClientOpPromise> ClientOpenWindow(
 
   RefPtr<BrowsingContext> bc;
   IgnoredErrorResult errResult;
-#ifdef MOZ_GECKOVIEW
-  // GeckoView has a delegation for service worker window.
-  GeckoViewOpenWindow(argsValidated, openInfo, getter_AddRefs(bc), errResult);
-#else
   OpenWindow(argsValidated, openInfo, getter_AddRefs(bc), errResult);
-#endif
   if (NS_WARN_IF(errResult.Failed())) {
     promise->Reject(errResult, __func__);
     return promise;

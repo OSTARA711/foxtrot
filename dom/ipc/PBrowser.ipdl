@@ -1075,9 +1075,6 @@ parent:
     /** Records a history visit. */
     async VisitURI(nullable nsIURI aURI, nullable nsIURI aLastVisitedURI, uint32_t aFlags, uint64_t aBrowserId);
 
-    /** Fetches the visited status for an array of URIs (Android-only). */
-    async QueryVisitedState(nullable nsIURI[] aURIs);
-
     /** Create a session store for a browser child. */
     async PSessionStore();
 

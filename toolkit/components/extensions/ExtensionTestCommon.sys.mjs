@@ -720,38 +720,6 @@ export var ExtensionTestCommon = class ExtensionTestCommon {
    * @returns {Partial<Extension>}
    */
   static generate(data) {
-    if (data.useAddonManager === "geckoview-only") {
-      // Some extension APIs are partially implemented in Java, and the
-      // interface between the JS and Java side (GeckoViewWebExtension)
-      // expects extensions to be registered with the AddonManager.
-      // This is at least necessary for tests that use the following APIs:
-      //   - browserAction/pageAction.
-      //   - tabs.create, tabs.update, tabs.remove (uses GeckoViewTabBridge).
-      //   - downloads API
-      //   - browsingData API (via ExtensionBrowsingData.sys.mjs).
-      //
-      // In xpcshell tests, the AddonManager is optional, so the AddonManager
-      // cannot unconditionally be enabled.
-      // In mochitests, tests are run in an actual browser, so the AddonManager
-      // is always enabled and hence useAddonManager is always set by default.
-      if (AppConstants.MOZ_GECKOVIEW) {
-        // Many MV3 tests set temporarilyInstalled for granted_host_permissions.
-        // The granted_host_permissions flag is only effective for temporarily
-        // installed extensions, so make sure to use "temporary" in this case.
-        if (data.temporarilyInstalled) {
-          data.useAddonManager = "temporary";
-        } else {
-          data.useAddonManager = "permanent";
-        }
-        // MockExtension requires data.manifest.applications.gecko.id to be set.
-        // The AddonManager requires an ID in the manifest for unsigned XPIs.
-        this.setExtensionID(data);
-      } else {
-        // On non-GeckoView, default to not using the AddonManager.
-        data.useAddonManager = null;
-      }
-    }
-
     let file = this.generateXPI(data);
 
     flushJarCache(file.path);

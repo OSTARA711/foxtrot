@@ -61,15 +61,12 @@ SOURCES += [
     "VRShMem.cpp",
 ]
 
-if CONFIG["OS_TARGET"] == "Android":
-    LOCAL_INCLUDES += ["/widget/android"]
-else:
-    DIRS += [
-        "service",
-    ]
-    UNIFIED_SOURCES += [
-        "VRServiceHost.cpp",
-    ]
+DIRS += [
+    "service",
+]
+UNIFIED_SOURCES += [
+    "VRServiceHost.cpp",
+]
 
 IPDL_SOURCES = [
     "ipc/PVR.ipdl",

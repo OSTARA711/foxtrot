@@ -203,9 +203,7 @@ void WidgetShutdownObserver::Register() {
     // The primary purpose of observing quit-application is
     // to avoid leaking a widget on Windows when nothing else
     // breaks the circular reference between the widget and
-    // TSFTextStore. However, our Android IME code crashes if
-    // doing this on Android, so let's not do this on Android.
-    // Doing this on Gtk and Mac just in case.
+    // TSFTextStore. Doing this on Gtk and Mac just in case.
     nsCOMPtr<nsIObserverService> observerService =
         mozilla::services::GetObserverService();
     if (observerService) {
@@ -1461,10 +1459,6 @@ already_AddRefed<WebRenderLayerManager> nsBaseWidget::CreateCompositorSession(
     if (mNeedFastSnaphot) {
       options.SetNeedFastSnaphot(true);
     }
-#elif defined(MOZ_WIDGET_ANDROID)
-    MOZ_ASSERT(supportsAcceleration);
-    options.SetAllowSoftwareWebRenderOGL(
-        gfx::gfxVars::AllowSoftwareWebRenderOGL());
 #elif defined(MOZ_WIDGET_GTK)
     if (supportsAcceleration) {
       options.SetAllowSoftwareWebRenderOGL(
@@ -1473,15 +1467,7 @@ already_AddRefed<WebRenderLayerManager> nsBaseWidget::CreateCompositorSession(
     options.SetAllowNativeCompositor(WidgetTypeSupportsNativeCompositing());
 #endif
 
-#ifdef MOZ_WIDGET_ANDROID
-    // Unconditionally set the compositor as initially paused, as we have not
-    // yet had a chance to send the compositor surface to the GPU process. We
-    // will do so shortly once we have returned to nsWindow::CreateLayerManager,
-    // where we will also resume the compositor if required.
-    options.SetInitiallyPaused(true);
-#else
     options.SetInitiallyPaused(CompositorInitiallyPaused());
-#endif
 
     RefPtr<WebRenderLayerManager> lm = new WebRenderLayerManager(this);
 
@@ -2542,12 +2528,6 @@ already_AddRefed<nsIBidiKeyboard> nsIWidget::CreateBidiKeyboard() {
   return CreateBidiKeyboardInner();
 }
 
-#ifdef ANDROID
-already_AddRefed<nsIBidiKeyboard> nsIWidget::CreateBidiKeyboardInner() {
-  // no bidi keyboard implementation
-  return nullptr;
-}
-#endif
 
 namespace mozilla::widget {
 

@@ -9,8 +9,6 @@ include("build/moz.configure/init.configure")
 # Note:
 # - Gecko-specific options and rules should go in toolkit/moz.configure.
 # - Firefox-specific options and rules should go in browser/moz.configure.
-# - Fennec-specific options and rules should go in
-#   mobile/android/moz.configure.
 # - Spidermonkey-specific options and rules should go in js/moz.configure.
 # - etc.
 
@@ -529,7 +527,7 @@ def build_backend_defaults(
         host.os == "WINNT"
         and target.os == "WINNT"
         and compile_environment
-        and project not in ("mobile/android", "memory", "tools/update-programs")
+        and project not in ("memory", "tools/update-programs")
     ):
         all_backends.append("VisualStudio")
     if compile_environment and project not in ("memory", "tools/update-programs"):
@@ -569,7 +567,7 @@ def build_gtest(build_project, target, automation, enable_tests):
     return bool(
         enable_tests
         and automation
-        and build_project in ("browser", "comm/mail", "mobile/android")
+        and build_project in ("browser", "comm/mail")
         and not (target.os == "Android" and target.cpu != "x86_64")
     )
 
