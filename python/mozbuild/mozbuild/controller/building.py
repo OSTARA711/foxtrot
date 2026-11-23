@@ -1563,12 +1563,9 @@ class BuildDriver(MozbuildObject):
         # need to be burdened with this.
         if not what:
             try:
-                # Fennec doesn't have useful output from just building. We should
-                # arguably make the build action useful for Fennec. Another day...
-                if self.substs["MOZ_BUILD_APP"] != "mobile/android":
-                    print("To take your build for a test drive, run: |mach run|")
+                print("To take your build for a test drive, run: |mach run|")
                 app = self.substs["MOZ_BUILD_APP"]
-                if app in ("browser", "mobile/android"):
+                if app == "browser":
                     print(
                         "For more information on what to do now, see "
                         "https://firefox-source-docs.mozilla.org/setup/contributing_code.html"  # noqa

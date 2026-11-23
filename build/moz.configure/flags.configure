@@ -20,7 +20,6 @@ check_and_add_flag("-fno-aligned-new", compiler=cxx_compiler)
 # ==============================================================
 @depends(
     cxx_compiler,
-    extra_toolchain_flags,
     linker_ldflags,
     llvm_objdump,
     when=target_has_linux_kernel,
@@ -31,7 +30,6 @@ check_and_add_flag("-fno-aligned-new", compiler=cxx_compiler)
 @imports(_from="mozbuild.shellutil", _import="split", _as="shell_split")
 def link_libstdcxx_statically(
     cxx_compiler,
-    extra_toolchain_flags,
     linker_ldflags,
     llvm_objdump,
 ):
@@ -60,7 +58,7 @@ def link_libstdcxx_statically(
                     #include <iostream>
                     int main() { std::cout << 1;}
                 """,
-                ["-o", bin_path] + (extra_toolchain_flags or []),
+                ["-o", bin_path],
                 wrapper=cxx_compiler.wrapper,
                 onerror=lambda: None,
             )
@@ -104,26 +102,15 @@ with only_when(building_with_gnu_compatible_cc):
 
 add_flag("-D_HAS_EXCEPTIONS=0", when=target_is_windows)
 
-# We only use -faddrsig with clang on android, and all version of clang we
-# support have it.
-add_addrsig_flag = depends(c_compiler, when=target_is_android)(
-    lambda c: c.type == "clang"
-)
-
-
 @depends(
     c_compiler,
-    extra_toolchain_flags,
     linker_ldflags,
     llvm_objdump,
-    add_addrsig_flag,
     when=building_with_gnu_compatible_cc & gcc_use_gnu_ld & enable_icf,
 )
 @checking("whether the linker supports Identical Code Folding")
 @imports("os")
-def linker_supports_icf(
-    c_compiler, extra_toolchain_flags, linker_ldflags, llvm_objdump, add_addrsig_flag
-):
+def linker_supports_icf(c_compiler, linker_ldflags, llvm_objdump):
     with create_temporary_file(suffix=".out") as bin_path:
         if (
             try_invoke_compiler(
@@ -135,9 +122,7 @@ def linker_supports_icf(
                                  int bar() {return 42;}
                                  int main() {return 0;}
                                  """,
-                ["-o", bin_path, "-Wl,--icf=safe", "-ffunction-sections"]
-                + (["-faddrsig"] if add_addrsig_flag else [])
-                + (extra_toolchain_flags or []),
+                ["-o", bin_path, "-Wl,--icf=safe", "-ffunction-sections"],
                 wrapper=c_compiler.wrapper,
                 onerror=lambda: None,
             )
@@ -461,11 +446,11 @@ check_and_add_linker_flag("-Wl,-Bsymbolic", when=check_Bsymbolic)
 
 
 # Check what kind of list files are supported by the linker
-@depends(c_compiler, link, linker_ldflags, extra_toolchain_flags)
+@depends(c_compiler, link, linker_ldflags)
 @checking("what kind of list files are supported by the linker")
 @imports("os")
 @imports(_from="__builtin__", _import="open")
-def expand_libs_list_style(c_compiler, link, linker_flags, extra_flags):
+def expand_libs_list_style(c_compiler, link, linker_flags):
     with create_temporary_file(suffix=".o") as objname, create_temporary_file(
         suffix=".list"
     ) as listname, create_temporary_file(suffix=".out") as outname:
@@ -490,7 +475,7 @@ def expand_libs_list_style(c_compiler, link, linker_flags, extra_flags):
         ):
             die("couldn't compile a simple C file")
 
-        ldflags = linker_flags + (extra_flags or [])
+        ldflags = linker_flags
 
         if c_compiler.type == "clang-cl":
             base_linker_cmd = [link] + ldflags + [f"-OUT:{outname}"]
@@ -634,12 +619,10 @@ def os_cppflags(env_cppflags):
     return flags
 
 
-@depends("CFLAGS", compilation_flags, android_flags, all_arm_flags)
+@depends("CFLAGS", compilation_flags, all_arm_flags)
 @imports(_from="mozbuild.shellutil", _import="split")
-def os_cflags(env_cflags, compilation_flags, android_flags, all_arm_flags):
+def os_cflags(env_cflags, compilation_flags, all_arm_flags):
     flags = []
-    if android_flags:
-        flags.extend(android_flags.cflags)
     if all_arm_flags:
         flags.extend(all_arm_flags)
     flags.extend(compilation_flags.cflags)
@@ -648,12 +631,10 @@ def os_cflags(env_cflags, compilation_flags, android_flags, all_arm_flags):
     return flags
 
 
-@depends("CXXFLAGS", compilation_flags, android_flags, all_arm_flags)
+@depends("CXXFLAGS", compilation_flags, all_arm_flags)
 @imports(_from="mozbuild.shellutil", _import="split")
-def os_cxxflags(env_cxxflags, compilation_flags, android_flags, all_arm_flags):
+def os_cxxflags(env_cxxflags, compilation_flags, all_arm_flags):
     flags = []
-    if android_flags:
-        flags.extend(android_flags.cxxflags)
     if all_arm_flags:
         flags.extend(all_arm_flags)
     flags.extend(compilation_flags.cxxflags)
@@ -665,7 +646,6 @@ def os_cxxflags(env_cxxflags, compilation_flags, android_flags, all_arm_flags):
 @depends(
     "ASFLAGS",
     asm_flags,
-    android_flags,
     all_arm_flags,
     defines_cpp_flags,
     c_compiler,
@@ -675,16 +655,12 @@ def os_cxxflags(env_cxxflags, compilation_flags, android_flags, all_arm_flags):
 def os_asflags(
     env_asflags,
     asm_flags,
-    android_flags,
     all_arm_flags,
     defines_cpp_flags,
     c_compiler,
     build_project,
 ):
     flags = []
-    if android_flags:
-        flags.extend(android_flags.asflags)
-        flags.append("-DANDROID")
     if all_arm_flags:
         flags.extend(all_arm_flags)
     flags.extend(asm_flags.asflags)

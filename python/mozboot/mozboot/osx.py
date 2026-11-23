@@ -35,56 +35,6 @@ output as packages are built.
 NO_BREW_INSTALLED = "It seems you don't have Homebrew installed."
 
 
-class OSXAndroidBootstrapper:
-    def install_mobile_android_packages(self, mozconfig_builder, artifact_mode=False):
-        os_arch = platform.machine()
-        if os_arch != "x86_64" and os_arch != "arm64":
-            raise Exception(
-                "You need a 64-bit version of Mac OS X to build "
-                "GeckoView/Firefox for Android."
-            )
-
-        from mozboot import android
-
-        if os_arch == "x86_64" or os_arch == "x86":
-            avd_manifest_path = android.AVD_MANIFEST_X86_64
-        else:
-            avd_manifest_path = android.AVD_MANIFEST_ARM64
-
-        android.ensure_android(
-            "macosx",
-            os_arch,
-            artifact_mode=artifact_mode,
-            no_interactive=self.no_interactive,
-            avd_manifest_path=avd_manifest_path,
-        )
-
-    def ensure_mobile_android_packages(self):
-        from mozboot import android
-
-        arch = platform.machine()
-        android.ensure_java("macosx", arch)
-
-        if arch == "x86_64" or arch == "x86":
-            self.install_toolchain_artifact(android.X86_64_ANDROID_AVD)
-        elif arch == "arm64":
-            self.install_toolchain_artifact(android.ARM64_ANDROID_AVD)
-
-    def install_mobile_android_artifact_mode_packages(self, mozconfig_builder):
-        self.install_mobile_android_packages(mozconfig_builder, artifact_mode=True)
-
-    def generate_mobile_android_mozconfig(self):
-        return self._generate_mobile_android_mozconfig()
-
-    def generate_mobile_android_artifact_mode_mozconfig(self):
-        return self._generate_mobile_android_mozconfig(artifact_mode=True)
-
-    def _generate_mobile_android_mozconfig(self, artifact_mode=False):
-        from mozboot import android
-
-        return android.generate_mozconfig("macosx", artifact_mode=artifact_mode)
-
-
 def ensure_command_line_tools():
     # We need either the command line tools or Xcode (one is sufficient).
     # Python 3, required to run this code, is not installed by default on macos
@@ -123,7 +73,7 @@ def ensure_command_line_tools():
         sys.exit(1)
 
 
-class OSXBootstrapperLight(OSXAndroidBootstrapper, BaseBootstrapper):
+class OSXBootstrapperLight(BaseBootstrapper):
     def __init__(self, version, **kwargs):
         BaseBootstrapper.__init__(self, **kwargs)
 
@@ -139,7 +89,7 @@ class OSXBootstrapperLight(OSXAndroidBootstrapper, BaseBootstrapper):
         pass
 
 
-class OSXBootstrapper(OSXAndroidBootstrapper, BaseBootstrapper):
+class OSXBootstrapper(BaseBootstrapper):
     def __init__(self, version, **kwargs):
         BaseBootstrapper.__init__(self, **kwargs)
 

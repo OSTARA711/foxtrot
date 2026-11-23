@@ -213,11 +213,6 @@ class BuildBackend(LoggingMixin):
         """
 
         app = config.substs["MOZ_BUILD_APP"]
-        if app == "mobile/android":
-            # In order to take effect, .purgecaches sentinels would need to be
-            # written to the Android device file system.
-            return
-
         root = mozpath.join(config.topobjdir, "dist", "bin")
 
         if app == "browser":

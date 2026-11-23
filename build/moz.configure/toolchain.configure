@@ -101,7 +101,7 @@ option("--disable-optimize", nargs="?", help="Disable optimizations via compiler
 
 @depends(target, when="MOZ_PGO")
 def forced_pgo_optimization_level(target):
-    if target.kernel == "Linux" and target.os != "Android":
+    if target.kernel == "Linux":
         return "-O3"
 
 
@@ -158,17 +158,6 @@ def moz_optimize_flags(
     else:
         return ["-O"]
 
-
-# Android NDK
-# ==============================================================
-
-
-@depends("--disable-compile-environment", target)
-def compiling_android(compile_env, target):
-    return compile_env and target.os == "Android"
-
-
-include("android-ndk.configure", when=compiling_android)
 
 with only_when(target_is_osx):
     # MacOS deployment target version
@@ -658,7 +647,7 @@ def same_arch_different_bits():
 
 @imports(_from="mozbuild.shellutil", _import="quote")
 @imports(_from="mozbuild.configure.constants", _import="OS_preprocessor_checks")
-def check_compiler(configure_cache, compiler, language, target, android_version):
+def check_compiler(configure_cache, compiler, language, target):
     info = get_compiler_info(configure_cache, compiler, language)
 
     flags = []
@@ -692,12 +681,7 @@ def check_compiler(configure_cache, compiler, language, target, android_version)
     # Check compiler target
     # --------------------------------------------------------------------
     has_target = False
-    if target.os == "Android" and android_version:
-        # This makes clang define __ANDROID_API__ and use versioned library
-        # directories from the NDK.
-        toolchain = "%s%d" % (target.toolchain, android_version)
-    else:
-        toolchain = target.toolchain
+    toolchain = target.toolchain
 
     if info.type == "clang":
         # Add the target explicitly when the target is aarch64 macosx, because
@@ -724,9 +708,7 @@ def check_compiler(configure_cache, compiler, language, target, android_version)
             flags.append("--target=%s" % toolchain)
             has_target = True
 
-        # Add target flag when there is an OS mismatch (e.g. building for Android on
-        # Linux). However, only do this if the target OS is in our whitelist, to
-        # keep things the same on other platforms.
+        # Add target flag when there is an OS mismatch. Only do this if the target OS is in our whitelist, to keep things the same on other platforms.
         elif target.os in OS_preprocessor_checks and (
             not info.os or info.os != target.os
         ):
@@ -1482,7 +1464,6 @@ def compiler(
         sysroot,
         macos_target,
         ios_target,
-        android_version,
         vc_compiler_version,
         multiarch_dir,
         winsysroot,
@@ -1500,7 +1481,6 @@ def compiler(
         sysroot,
         macos_target,
         ios_target,
-        android_version,
         vc_compiler_version,
         multiarch_dir,
         winsysroot,
@@ -1525,7 +1505,6 @@ def compiler(
             wrapper + [compiler] + flags,
             language,
             host_or_target,
-            android_version,
         )
 
         if host_or_target.os == "OSX" and macos_target:
@@ -1559,7 +1538,6 @@ def compiler(
                     wrapper + [compiler] + flags,
                     language,
                     host_or_target,
-                    android_version,
                 )
         except FatalCheckError:
             pass
@@ -1609,11 +1587,6 @@ def compiler(
         # that the `checking` message doesn't pretend the compiler can be used
         # to then bail out one line later.
         if info.type == "gcc":
-            if host_or_target.os == "Android":
-                raise FatalCheckError(
-                    "GCC is not supported on Android.\n"
-                    "Please use clang from the Android NDK instead."
-                )
             gcc_version = minimum_gcc_version()
             if info.version < gcc_version:
                 raise FatalCheckError(
@@ -1685,13 +1658,6 @@ def compiler(
                     % (host_or_target.alias, info.version)
                 )
 
-        if host_or_target.os == "Android":
-            # Need at least clang 13 for compiler-rt/libunwind being the default.
-            if info.type == "clang" and info.version < "13.0":
-                raise FatalCheckError(
-                    "Only clang/llvm 13.0 or newer is supported for %s (found version %s)."
-                    % (host_or_target.alias, info.version)
-                )
 
         if host_or_target.os == "WINNT" and info.type == "gcc":
             raise FatalCheckError(
@@ -1953,7 +1919,6 @@ def select_linker_tmpl(host_or_target):
             "--enable-linker",
             c_compiler,
             developer_options,
-            extra_toolchain_flags,
             target,
             stdcxx_compat,
             when=is_linker_option_enabled,
@@ -1964,7 +1929,6 @@ def select_linker_tmpl(host_or_target):
             dependable(None),
             host_c_compiler,
             developer_options,
-            dependable(None),
             host,
             stdcxx_compat,
             when=is_not_winnt_or_sunos(host_or_target),
@@ -1976,7 +1940,7 @@ def select_linker_tmpl(host_or_target):
     @imports("os")
     @imports("shutil")
     def select_linker(
-        linker, c_compiler, developer_options, toolchain_flags, target, stdcxx_compat
+        linker, c_compiler, developer_options, target, stdcxx_compat
     ):
         if linker:
             linker = linker[0]
@@ -2011,8 +1975,6 @@ def select_linker_tmpl(host_or_target):
             else:
                 linker_flag = []
             cmd = cmd_base + linker_flag + version_check
-            if toolchain_flags:
-                cmd += toolchain_flags
 
             # ld64 doesn't have anything to print out a version. It does print out
             # "ld64: For information on command line options please use 'man ld'."
@@ -2111,8 +2073,6 @@ def linker_ldflags_tmpl(host_or_target):
             target,
             target_sysroot,
             target_multiarch_dir,
-            android_sysroot,
-            android_version,
             c_compiler,
             developer_options,
         )
@@ -2122,8 +2082,6 @@ def linker_ldflags_tmpl(host_or_target):
             host,
             host_sysroot,
             host_multiarch_dir,
-            dependable(None),
-            dependable(None),
             host_c_compiler,
             developer_options,
         )
@@ -2135,8 +2093,6 @@ def linker_ldflags_tmpl(host_or_target):
         target,
         sysroot,
         multiarch_dir,
-        android_sysroot,
-        android_version,
         c_compiler,
         developer_options,
     ):
@@ -2162,17 +2118,6 @@ def linker_ldflags_tmpl(host_or_target):
                         sysroot.path, multiarch_dir, sysroot.stdcxx_version
                     )
                 )
-        if android_sysroot:
-            # BFD/gold linkers need a manual --rpath-link for indirect
-            # dependencies.
-            flags += [
-                "-Wl,--rpath-link={}/usr/lib/{}".format(
-                    android_sysroot, target.toolchain
-                ),
-                "-Wl,--rpath-link={}/usr/lib/{}/{}".format(
-                    android_sysroot, target.toolchain, android_version
-                ),
-            ]
         if (
             developer_options
             and linker
@@ -2268,9 +2213,6 @@ def needs_libstdcxx_newness_check(cxx_compiler, target):
         return
 
     if target.kernel not in ("Linux", "WINNT"):
-        return
-
-    if target.os == "Android":
         return
 
     return True
@@ -2377,68 +2319,6 @@ def color_cflags(info, host):
 
 set_config("COLOR_CFLAGS", color_cflags)
 
-# Some standard library headers (notably bionic on Android) declare standard
-# functions (e.g. getchar()) and also #define macros for those standard
-# functions.  libc++ deals with this by doing something like the following
-# (explanatory comments added):
-#
-#   #ifdef FUNC
-#   // Capture the definition of FUNC.
-#   inline _LIBCPP_INLINE_VISIBILITY int __libcpp_FUNC(...) { return FUNC(...); }
-#   #undef FUNC
-#   // Use a real inline definition.
-#   inline _LIBCPP_INLINE_VISIBILITY int FUNC(...) { return _libcpp_FUNC(...); }
-#   #endif
-#
-# _LIBCPP_INLINE_VISIBILITY is typically defined as:
-#
-#   __attribute__((__visibility__("hidden"), __always_inline__))
-#
-# Unfortunately, this interacts badly with our system header wrappers, as the:
-#
-#   #pragma GCC visibility push(default)
-#
-# that they do prior to including the actual system header is treated by the
-# compiler as an explicit declaration of visibility on every function declared
-# in the header.  Therefore, when the libc++ code above is encountered, it is
-# as though the compiler has effectively seen:
-#
-#   int FUNC(...) __attribute__((__visibility__("default")));
-#   int FUNC(...) __attribute__((__visibility__("hidden")));
-#
-# and the compiler complains about the mismatched visibility declarations.
-#
-# However, libc++ will only define _LIBCPP_INLINE_VISIBILITY if there is no
-# existing definition.  We can therefore define it to the empty string (since
-# we are properly managing visibility ourselves) and avoid this whole mess.
-# Note that we don't need to do this with gcc, as libc++ detects gcc and
-# effectively does the same thing we are doing here.
-#
-# _LIBCPP_ALWAYS_INLINE needs a similar workarounds, since it too declares
-# hidden visibility.
-#
-# _LIBCPP_HIDE_FROM_ABI is a macro in libc++ versions in NDKs >=r19.  It too
-# declares hidden visibility, but it also declares functions as excluded from
-# explicit instantiation (roughly: the function can be unused in the current
-# compilation, but does not then trigger an actual definition of the function;
-# it is assumed the real definition comes from elsewhere).  We need to replicate
-# this setup.
-
-
-@depends(c_compiler, target)
-def libcxx_override_visibility(c_compiler, target):
-    if c_compiler.type == "clang" and target.os == "Android":
-        return namespace(
-            empty="",
-            hide_from_abi="__attribute__((__exclude_from_explicit_instantiation__))",
-        )
-
-
-set_define("_LIBCPP_INLINE_VISIBILITY", libcxx_override_visibility.empty)
-set_define("_LIBCPP_ALWAYS_INLINE", libcxx_override_visibility.empty)
-
-set_define("_LIBCPP_HIDE_FROM_ABI", libcxx_override_visibility.hide_from_abi)
-
 
 @depends(target, build_environment)
 def visibility_flags(target, env):
@@ -2480,9 +2360,6 @@ def check_thread(target, c_compiler):
     if target.cpu in ("mips32", "mips64"):
         # mips builds fail with TLS variables because of a binutils bug.
         # See bug 528687
-        return False
-    if target.os == "Android":
-        # The custom dynamic linker doesn't support TLS variables
         return False
     if target.kernel == "OpenBSD":
         # OpenBSD doesn't have TLS support, and the test succeeds with clang++
@@ -2634,10 +2511,6 @@ with only_when(asan):
             cpu = {"x86": "i386"}.get(target.cpu, target.cpu)
             clang_rt_asan_lib = f"clang_rt.asan_dynamic-{cpu}.dll"
             subdir = "windows"
-        elif target.os == "Android":
-            cpu = {"x86": "i686"}.get(target.cpu, target.cpu)
-            clang_rt_asan_lib = f"libclang_rt.asan-{cpu}-android.so"
-            subdir = "linux"
         else:
             return
 
@@ -3222,18 +3095,16 @@ def as_with_flags(as_info, assembler, provided_assembler, c_compiler):
 set_config("AS", as_with_flags)
 
 
-@depends(assembler, c_compiler, extra_toolchain_flags)
+@depends(assembler, c_compiler)
 @imports("subprocess")
 @imports(_from="os", _import="devnull")
-def gnu_as(assembler, c_compiler, toolchain_flags):
+def gnu_as(assembler, c_compiler):
     # clang uses a compatible GNU assembler.
     if c_compiler.type == "clang":
         return True
 
     if c_compiler.type == "gcc":
         cmd = [assembler] + c_compiler.flags
-        if toolchain_flags:
-            cmd += toolchain_flags
         cmd += ["-Wa,--version", "-c", "-o", devnull, "-x", "assembler", "-"]
         # We don't actually have to provide any input on stdin, `Popen.communicate` will
         # close the stdin pipe.
@@ -3454,7 +3325,6 @@ def enable_libfuzzer(fuzzing, afl, snapshot_fuzzing, c_compiler, target):
         and not afl
         and not snapshot_fuzzing
         and c_compiler.type == "clang"
-        and target.os != "Android"
     ):
         return True
 
@@ -3673,13 +3543,13 @@ target_ar = check_prog("AR", target_ar_config.names, paths=clang_search_path)
 set_config("AR_FLAGS", target_ar_config.flags)
 
 
-@depends(c_compiler, extra_toolchain_flags, target_ar, target_ar_config)
+@depends(c_compiler, target_ar, target_ar_config)
 @checking("whether ar supports response files")
 @imports("os")
 @imports(_from="__builtin__", _import="FileNotFoundError")
 @imports(_from="__builtin__", _import="open")
 @imports(_from="mozbuild.configure.util", _import="LineIO")
-def ar_supports_response_files(c_compiler, extra_toolchain_flags, ar, ar_config):
+def ar_supports_response_files(c_compiler, ar, ar_config):
     lib_path = list_path = None
     with create_temporary_file(suffix=".o") as obj_path:
         if (
@@ -3690,7 +3560,7 @@ def ar_supports_response_files(c_compiler, extra_toolchain_flags, ar, ar_config)
                 [c_compiler.compiler] + c_compiler.flags,
                 c_compiler.language,
                 "void foo() {}",
-                ["-c", "-o", obj_path] + (extra_toolchain_flags or []),
+                ["-c", "-o", obj_path],
                 wrapper=c_compiler.wrapper,
                 onerror=lambda: None,
             )

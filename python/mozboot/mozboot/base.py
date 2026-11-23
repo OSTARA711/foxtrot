@@ -199,7 +199,6 @@ class BaseBootstrapper:
         """
         Install pre-built packages needed to build Firefox for Desktop (application 'browser')
 
-        Currently this is not needed and kept for compatibility with Firefox for Android.
         """
         pass
 
@@ -207,7 +206,6 @@ class BaseBootstrapper:
         """
         Install pre-built packages needed to build SpiderMonkey JavaScript Engine
 
-        Currently this is not needed and kept for compatibility with Firefox for Android.
         """
         pass
 
@@ -215,7 +213,6 @@ class BaseBootstrapper:
         """
         Install pre-built packages needed to build Firefox for Desktop (application 'browser')
 
-        Currently this is not needed and kept for compatibility with Firefox for Android.
         """
         pass
 
@@ -262,68 +259,6 @@ class BaseBootstrapper:
         a path where the build artifacts will be written to.
         """
         return BROWSER_ARTIFACT_MODE_MOZCONFIG
-
-    def install_mobile_android_packages(self, mozconfig_builder):
-        """
-        Install packages required to build GeckoView (application
-        'mobile/android').
-        """
-        raise NotImplementedError(
-            "Cannot bootstrap GeckoView/Firefox for Android: "
-            "%s does not yet implement install_mobile_android_packages()" % __name__
-        )
-
-    def ensure_mobile_android_packages(self):
-        """
-        Install pre-built packages required to run GeckoView (application 'mobile/android')
-        """
-        raise NotImplementedError(
-            "Cannot bootstrap GeckoView/Firefox for Android: "
-            "%s does not yet implement ensure_mobile_android_packages()" % __name__
-        )
-
-    def ensure_mobile_android_artifact_mode_packages(self):
-        """
-        Install pre-built packages required to run GeckoView Artifact Build
-        (application 'mobile/android')
-        """
-        self.ensure_mobile_android_packages()
-
-    def generate_mobile_android_mozconfig(self):
-        """
-        Print a message to the console detailing what the user's mozconfig
-        should contain.
-
-        GeckoView/Firefox for Android needs an application and an ABI set, and it needs
-        paths to the Android SDK and NDK.
-        """
-        raise NotImplementedError(
-            "%s does not yet implement generate_mobile_android_mozconfig()" % __name__
-        )
-
-    def install_mobile_android_artifact_mode_packages(self, mozconfig_builder):
-        """
-        Install packages required to build GeckoView/Firefox for Android (application
-        'mobile/android', also known as Fennec) in Artifact Mode.
-        """
-        raise NotImplementedError(
-            "Cannot bootstrap GeckoView/Firefox for Android Artifact Mode: "
-            "%s does not yet implement install_mobile_android_artifact_mode_packages()"
-            % __name__
-        )
-
-    def generate_mobile_android_artifact_mode_mozconfig(self):
-        """
-        Print a message to the console detailing what the user's mozconfig
-        should contain.
-
-        GeckoView/Firefox for Android Artifact Mode needs an application and an ABI set,
-        and it needs paths to the Android SDK.
-        """
-        raise NotImplementedError(
-            "%s does not yet implement generate_mobile_android_artifact_mode_mozconfig()"
-            % __name__
-        )
 
     def ensure_sccache_packages(self):
         """
@@ -618,21 +553,6 @@ class BaseBootstrapper:
         if rust.platform() == win64 and win32 not in targets:
             subprocess.check_call([str(rustup), "target", "add", win32])
 
-        if "mobile_android" in self.application:
-            # Let's add the most common targets.
-            if rust_version < Version("1.33"):
-                arm_target = "armv7-linux-androideabi"
-            else:
-                arm_target = "thumbv7neon-linux-androideabi"
-            android_targets = (
-                arm_target,
-                "aarch64-linux-android",
-                "i686-linux-android",
-                "x86_64-linux-android",
-            )
-            for target in android_targets:
-                if target not in targets:
-                    subprocess.check_call([str(rustup), "target", "add", target])
 
     def upgrade_rust(self, rustup: Path):
         """Upgrade Rust.

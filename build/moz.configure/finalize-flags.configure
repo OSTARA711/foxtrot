@@ -10,7 +10,6 @@
     linker_flags,
     linker_ldflags,
     pack_relative_relocs_flags,
-    android_flags,
     thumb_option,
 )
 @imports(_from="mozbuild.shellutil", _import="split")
@@ -19,12 +18,9 @@ def os_ldflags(
     linker_flags,
     linker_ldflags,
     pack_relative_relocs_flags,
-    android_flags,
     thumb_option,
 ):
     flags = []
-    if android_flags:
-        flags.extend(android_flags.ldflags)
     if thumb_option:
         flags.extend(thumb_option)
     if env_ldflags:

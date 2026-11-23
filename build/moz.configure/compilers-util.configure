@@ -160,7 +160,6 @@ def compiler_class(compiler, host_or_target):
             @depends(
                 self,
                 dependable(flags),
-                extra_toolchain_flags,
                 dependable(header),
                 onerror,
                 configure_cache,
@@ -170,14 +169,11 @@ def compiler_class(compiler, host_or_target):
             def func(
                 compiler,
                 flags,
-                extra_flags,
                 header,
                 onerror,
                 configure_cache,
             ):
                 flags = list(flags or [])
-                if is_target:
-                    flags += extra_flags or []
                 header = header or ""
                 if isinstance(header, (list, tuple)):
                     header = "\n".join(header)

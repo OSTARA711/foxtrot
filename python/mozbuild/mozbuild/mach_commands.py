@@ -3563,8 +3563,6 @@ def package_l10n(command_context, verbose=False, locales=[]):
         "Invoking multi-locale `mach package`",
     )
     target = ["package"]
-    if command_context.substs["MOZ_BUILD_APP"] == "mobile/android":
-        target.append("AB_CD=multi")
 
     command_context._run_make(
         directory=command_context.topobjdir,
@@ -3574,37 +3572,6 @@ def package_l10n(command_context, verbose=False, locales=[]):
         ensure_exit_code=True,
     )
 
-    if command_context.substs["MOZ_BUILD_APP"] == "mobile/android":
-        command_context.log(
-            logging.INFO,
-            "package-multi-locale",
-            {},
-            "Invoking `mach android archive-geckoview`",
-        )
-        command_context.run_process(
-            [
-                sys.executable,
-                mozpath.join(command_context.topsrcdir, "mach"),
-                "android",
-                "archive-geckoview",
-            ],
-            append_env=append_env,
-            pass_thru=True,
-            ensure_exit_code=True,
-            cwd=mozpath.join(command_context.topsrcdir),
-        )
-
-        # This is tricky: most Android build commands will regenerate the
-        # omnijar, producing a `res/multilocale.txt` that does not contain the
-        # set of locales packaged by this command.  To avoid regenerating, we
-        # set a special environment variable.
-        print(
-            "Execute `env MOZ_CHROME_MULTILOCALE='{}' ".format(
-                append_env["MOZ_CHROME_MULTILOCALE"]
-            )
-            + "mach android install-geckoview_example` "
-            + "to install the multi-locale geckoview_example and test APKs."
-        )
 
     return 0
 

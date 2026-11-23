@@ -84,21 +84,6 @@ class WindowsBootstrapper(BaseBootstrapper):
     def install_browser_packages(self, mozconfig_builder):
         self.pacman_install(*self.BROWSER_PACKAGES)
 
-    def install_mobile_android_packages(self, mozconfig_builder):
-        raise NotImplementedError(
-            "We do not support building Android on Windows. Sorry!"
-        )
-
-    def ensure_mobile_android_packages(self):
-        raise NotImplementedError(
-            "We do not support building Android on Windows. Sorry!"
-        )
-
-    def install_mobile_android_artifact_mode_packages(self, mozconfig_builder):
-        raise NotImplementedError(
-            "We do not support building Android on Windows. Sorry!"
-        )
-
     def _update_package_manager(self):
         self.pacman_update()
 

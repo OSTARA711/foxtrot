@@ -169,36 +169,6 @@ class MozillaBuildBootstrapper(BaseBootstrapper):
             return "x86_64"
         return os_arch
 
-    def install_mobile_android_packages(self, mozconfig_builder, artifact_mode=False):
-        from mozboot import android
-
-        os_arch = self._os_arch()
-
-        android.ensure_android(
-            "windows",
-            os_arch,
-            artifact_mode=artifact_mode,
-            no_interactive=self.no_interactive,
-            avd_manifest_path=android.AVD_MANIFEST_X86_64,
-        )
-
-    def ensure_mobile_android_packages(self):
-        from mozboot import android
-
-        android.ensure_java("windows", self._os_arch())
-        self.install_toolchain_artifact(android.X86_64_ANDROID_AVD)
-
-    def install_mobile_android_artifact_mode_packages(self, mozconfig_builder):
-        self.install_mobile_android_packages(mozconfig_builder, artifact_mode=True)
-
-    def generate_mobile_android_mozconfig(self, artifact_mode=False):
-        from mozboot import android
-
-        return android.generate_mozconfig("windows", artifact_mode=artifact_mode)
-
-    def generate_mobile_android_artifact_mode_mozconfig(self):
-        return self.generate_mobile_android_mozconfig(artifact_mode=True)
-
     def ensure_sccache_packages(self):
         from mozboot import sccache
 

@@ -52,8 +52,8 @@ Note on Artifact Mode:
 Artifact builds download prebuilt C++ components rather than building
 them locally. Artifact builds are faster!
 
-Artifact builds are recommended for people working on Firefox or
-Firefox for Android frontends, or the GeckoView Java API. They are unsuitable
+Artifact builds are recommended for people working on Firefox Desktop.
+They are unsuitable
 for those working on C++ code. For more information see:
 https://firefox-source-docs.mozilla.org/contributing/build/artifact_builds.html.
 
@@ -65,8 +65,6 @@ APPLICATIONS = OrderedDict(
     [
         ("Firefox for Desktop Artifact Mode", "browser_artifact_mode"),
         ("Firefox for Desktop", "browser"),
-        ("GeckoView/Firefox for Android Artifact Mode", "mobile_android_artifact_mode"),
-        ("GeckoView/Firefox for Android", "mobile_android"),
         ("SpiderMonkey JavaScript engine", "js"),
     ]
 )
@@ -356,7 +354,7 @@ class Bootstrapper:
         if not self.instance.artifact_mode:
             self.instance.install_toolchain_artifact("clang-tools/clang-tidy")
             self.instance.ensure_sccache_packages()
-        # Like 'ensure_browser_packages' or 'ensure_mobile_android_packages'
+        # Dispatch to the selected application's package preparation method.
         getattr(self.instance, "ensure_%s_packages" % application)()
 
     def check_code_submission(self, checkout_root: Path):
@@ -385,7 +383,7 @@ class Bootstrapper:
 
         if self.choice is None:
             applications = APPLICATIONS
-            # Like ['1. Firefox for Desktop', '2. Firefox for Android Artifact Mode', ...].
+            # Display the available application choices.
             labels = [
                 "%s. %s" % (i, name) for i, name in enumerate(applications.keys(), 1)
             ]
@@ -451,7 +449,7 @@ class Bootstrapper:
 
         self.instance.install_system_packages()
 
-        # Like 'install_browser_packages' or 'install_mobile_android_packages'.
+        # Dispatch to the selected application's package installation method.
         getattr(self.instance, "install_%s_packages" % application)(mozconfig_builder)
 
         if not self.instance.artifact_mode:
@@ -687,7 +685,7 @@ class Bootstrapper:
         self._write_default_mozconfig(expected_raw_mozconfig)
 
     def _output_mozconfig(self, application, mozconfig_builder):
-        # Like 'generate_browser_mozconfig' or 'generate_mobile_android_mozconfig'.
+        # Generate the selected application's mozconfig.
         additional_mozconfig = getattr(
             self.instance, "generate_%s_mozconfig" % application
         )()
