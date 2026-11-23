@@ -126,8 +126,6 @@ MOZ_RUNINIT std::unordered_map<std::string, BackendLabel>
     kTelemetryBackendLabel = {
         {"audiounit", BackendLabel::eAudiounit},
         {"audiounit-rust", BackendLabel::eAudiounitRust},
-        {"aaudio", BackendLabel::eAaudio},
-        {"opensl", BackendLabel::eOpensl},
         {"wasapi", BackendLabel::eWasapi},
         {"winmm", BackendLabel::eWinmm},
         {"alsa", BackendLabel::eAlsa},

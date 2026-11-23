@@ -64,7 +64,7 @@ struct backend_caps {
 // creation
 static backend_caps backend_capabilities[] = {
     {"sun", 1},        {"wasapi", 1}, {"kai", 1},    {"audiounit", 1},
-    {"audiotrack", 0}, {"opensl", 1}, {"aaudio", 1}, {"jack", 1},
+    {"jack", 1},
     {"pulse", 1},      {"sndio", 1},  {"oss", 1},    {"winmm", 0},
     {"alsa", 1},
 };

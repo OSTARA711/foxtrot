@@ -285,12 +285,7 @@ set_config("MOZ_WEBMIDI_MIDIR_IMPL", midir_support)
 # ==============================================================
 @depends(target)
 def audio_backends_default(target):
-    if target.os == "Android":
-        return (
-            "aaudio",
-            "opensl",
-        )
-    elif target.os in ("DragonFly", "FreeBSD", "SunOS"):
+    if target.os in ("DragonFly", "FreeBSD", "SunOS"):
         return ("oss",)
     elif target.os == "OpenBSD":
         return ("sndio",)
@@ -310,11 +305,9 @@ option(
     "--enable-audio-backends",
     nargs="+",
     choices=(
-        "aaudio",
         "alsa",
         "audiounit",
         "jack",
-        "opensl",
         "oss",
         "pulseaudio",
         "sndio",
@@ -324,13 +317,6 @@ option(
     default=audio_backends_default,
     help="{Enable|Disable} various cubeb backends",
 )
-
-
-@depends("--enable-audio-backends", target)
-def imply_aaudio(values, target):
-    if any("aaudio" in value for value in values) and target.os != "Android":
-        die("Cannot enable AAudio on %s", target.os)
-    return any("aaudio" in value for value in values) or None
 
 
 @depends("--enable-audio-backends", target)
@@ -354,13 +340,6 @@ def imply_audiounit(values, target):
 @depends("--enable-audio-backends")
 def imply_jack(values):
     return any("jack" in value for value in values) or None
-
-
-@depends("--enable-audio-backends", target)
-def imply_opensl(values, target):
-    if any("opensl" in value for value in values) and target.os != "Android":
-        die("Cannot enable OpenSL on %s", target.os)
-    return any("opensl" in value for value in values) or None
 
 
 @depends("--enable-audio-backends", target)
@@ -406,7 +385,6 @@ def imply_wasapi(values, target):
     return any("wasapi" in value for value in values) or None
 
 
-set_config("MOZ_AAUDIO", imply_aaudio, when="--enable-audio-backends")
 
 imply_option(
     "--enable-alsa", imply_alsa, reason="--enable-audio-backends", when=use_pkg_config
@@ -418,7 +396,6 @@ imply_option(
     "--enable-jack", imply_jack, reason="--enable-audio-backends", when=use_pkg_config
 )
 
-set_config("MOZ_OPENSL", imply_opensl, when="--enable-audio-backends")
 
 set_config("MOZ_OSS", imply_oss, when="--enable-audio-backends")
 

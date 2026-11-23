@@ -68,21 +68,9 @@ sndio_init(cubeb ** context, char const * context_name);
 int
 sun_init(cubeb ** context, char const * context_name);
 #endif
-#if defined(USE_OPENSL)
-int
-opensl_init(cubeb ** context, char const * context_name);
-#endif
 #if defined(USE_OSS)
 int
 oss_init(cubeb ** context, char const * context_name);
-#endif
-#if defined(USE_AAUDIO)
-int
-aaudio_init(cubeb ** context, char const * context_name);
-#endif
-#if defined(USE_AUDIOTRACK)
-int
-audiotrack_init(cubeb ** context, char const * context_name);
 #endif
 #if defined(USE_KAI)
 int
@@ -195,21 +183,9 @@ cubeb_init(cubeb ** context, char const * context_name,
 #if defined(USE_SUN)
       init_oneshot = sun_init;
 #endif
-    } else if (!strcmp(backend_name, "opensl")) {
-#if defined(USE_OPENSL)
-      init_oneshot = opensl_init;
-#endif
     } else if (!strcmp(backend_name, "oss")) {
 #if defined(USE_OSS)
       init_oneshot = oss_init;
-#endif
-    } else if (!strcmp(backend_name, "aaudio")) {
-#if defined(USE_AAUDIO)
-      init_oneshot = aaudio_init;
-#endif
-    } else if (!strcmp(backend_name, "audiotrack")) {
-#if defined(USE_AUDIOTRACK)
-      init_oneshot = audiotrack_init;
 #endif
     } else if (!strcmp(backend_name, "kai")) {
 #if defined(USE_KAI)
@@ -258,15 +234,6 @@ cubeb_init(cubeb ** context, char const * context_name,
 #endif
 #if defined(USE_SUN)
     sun_init,
-#endif
-#if defined(USE_AAUDIO)
-    aaudio_init,
-#endif
-#if defined(USE_OPENSL)
-    opensl_init,
-#endif
-#if defined(USE_AUDIOTRACK)
-    audiotrack_init,
 #endif
 #if defined(USE_KAI)
     kai_init,

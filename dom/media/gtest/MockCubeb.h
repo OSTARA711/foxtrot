@@ -605,8 +605,6 @@ static char const* cubeb_mock_get_backend_id(cubeb* context) {
   return "audiounit";
 #elif defined(XP_WIN)
   return "wasapi";
-#elif defined(ANDROID)
-  return "opensl";
 #elif defined(__OpenBSD__)
   return "sndio";
 #else

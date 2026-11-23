@@ -98,15 +98,17 @@ state_cb_audio(cubeb_stream * /*stream*/, void * /*user*/,
 int
 supports_float32(string backend_id)
 {
-  return backend_id != "opensl" && backend_id != "audiotrack";
+  (void)backend_id;
+  return true;
 }
 
 /* Some backends don't have code to deal with more than mono or stereo. */
 int
 supports_channel_count(string backend_id, int nchannels)
 {
-  return nchannels <= 2 ||
-         (backend_id != "opensl" && backend_id != "audiotrack");
+  (void)backend_id;
+  (void)nchannels;
+  return true;
 }
 
 int
