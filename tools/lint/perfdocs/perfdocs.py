@@ -67,22 +67,12 @@ def run_perfdocs(config, logger=None, paths=None, generate=True):
         if not path.exists():
             raise Exception("Cannot locate directory at %s" % str(path))
 
-    decision_task_id = os.environ.get("DECISION_TASK_ID", None)
-    if decision_task_id:
-        from taskgraph.util.taskcluster import get_artifact
-
-        task_graph = get_artifact(decision_task_id, "public/full-task-graph.json")
-    else:
-        from tryselect.tasks import generate_tasks
-
-        task_graph = generate_tasks(full=True, disable_target_task_filter=True).tasks
-
     # Late import because logger isn't defined until later
     from perfdocs.generator import Generator
     from perfdocs.verifier import Verifier
 
     # Run the verifier first
-    verifier = Verifier(top_dir, task_graph)
+    verifier = Verifier(top_dir)
     verifier.validate_tree()
 
     if not PerfDocLogger.FAILED:

@@ -36,7 +36,6 @@ import logging
 import os
 import platform
 import re
-import stat
 import subprocess
 import sys
 import time
@@ -45,7 +44,6 @@ from io import StringIO
 import mozpack.path as mozpath
 from mach.decorators import Command, CommandArgument
 from mozbuild.base import BinaryNotFoundException, MachCommandBase
-from mozbuild.dirutils import mkdir
 
 AUTOMATION = "MOZ_AUTOMATION" in os.environ
 BROWSERTIME_ROOT = os.path.dirname(__file__)
@@ -174,104 +172,6 @@ def host_platform():
     raise ValueError(f"sys.platform is not yet supported: {sys.platform}")
 
 
-# Map from `host_platform()` to a `fetch`-like syntax.
-host_fetches = {
-    "darwin": {
-        "ffmpeg": {
-            "type": "static-url",
-            "url": "https://github.com/mozilla/perf-automation/releases/download/FFMPEG-v4.4.1/ffmpeg-macos.zip",  # noqa
-            # An extension to `fetch` syntax.
-            "path": "ffmpeg-macos",
-        },
-    },
-    "linux64": {
-        "ffmpeg": {
-            "type": "static-url",
-            "url": "https://github.com/mozilla/perf-automation/releases/download/FFMPEG-v4.4.1/ffmpeg-4.4.1-i686-static.tar.xz",  # noqa
-            # An extension to `fetch` syntax.
-            "path": "ffmpeg-4.4.1-i686-static",
-        },
-    },
-    "win64": {
-        "ffmpeg": {
-            "type": "static-url",
-            "url": "https://github.com/mozilla/perf-automation/releases/download/FFMPEG-v4.4.1/ffmpeg-4.4.1-full_build.zip",  # noqa
-            # An extension to `fetch` syntax.
-            "path": "ffmpeg-4.4.1-full_build",
-        },
-    },
-}
-
-
-def artifact_cache_path(command_context):
-    r"""Downloaded artifacts will be kept here."""
-    # The convention is $MOZBUILD_STATE_PATH/cache/$FEATURE.
-    return mozpath.join(command_context._mach_context.state_dir, "cache", "browsertime")
-
-
-def state_path(command_context):
-    r"""Unpacked artifacts will be kept here."""
-    # The convention is $MOZBUILD_STATE_PATH/$FEATURE.
-    return mozpath.join(command_context._mach_context.state_dir, "browsertime")
-
-
-def setup_prerequisites(command_context):
-    r"""Install browsertime and visualmetrics.py prerequisites."""
-
-    from mozbuild.action.tooltool import unpack_file
-    from mozbuild.artifact_cache import ArtifactCache
-
-    # Download the visualmetrics-portable.py requirements.
-    artifact_cache = ArtifactCache(
-        artifact_cache_path(command_context),
-        log=command_context.log,
-        skip_cache=False,
-    )
-
-    fetches = host_fetches[host_platform()]
-    for tool, fetch in sorted(fetches.items()):
-        archive = artifact_cache.fetch(fetch["url"])
-        # TODO: assert type, verify sha256 (and size?).
-
-        if fetch.get("unpack", True):
-            cwd = os.getcwd()
-            try:
-                mkdir(state_path(command_context))
-                os.chdir(state_path(command_context))
-                command_context.log(
-                    logging.INFO,
-                    "browsertime",
-                    {"path": archive},
-                    "Unpacking temporary location {path}",
-                )
-
-                unpack_file(archive)
-
-                # Make sure the expected path exists after extraction
-                path = os.path.join(state_path(command_context), fetch.get("path"))
-                if not os.path.exists(path):
-                    raise Exception("Cannot find an extracted directory: %s" % path)
-
-                try:
-                    # Some archives provide binaries that don't have the
-                    # executable bit set so we need to set it here
-                    for root, dirs, files in os.walk(path):
-                        for edir in dirs:
-                            loc_to_change = os.path.join(root, edir)
-                            st = os.stat(loc_to_change)
-                            os.chmod(loc_to_change, st.st_mode | stat.S_IEXEC)
-                        for efile in files:
-                            loc_to_change = os.path.join(root, efile)
-                            st = os.stat(loc_to_change)
-                            os.chmod(loc_to_change, st.st_mode | stat.S_IEXEC)
-                except Exception as e:
-                    raise Exception(
-                        "Could not set executable bit in %s, error: %s" % (path, str(e))
-                    )
-            finally:
-                os.chdir(cwd)
-
-
 def setup_browsertime(
     command_context,
     should_clobber=False,
@@ -282,9 +182,6 @@ def setup_browsertime(
 
     sys.path.append(mozpath.join(command_context.topsrcdir, "tools", "lint", "eslint"))
     import setup_helper
-
-    if not new_upstream_url:
-        setup_prerequisites(command_context)
 
     if new_upstream_url:
         package_json_path = os.path.join(BROWSERTIME_ROOT, "package.json")
@@ -383,22 +280,9 @@ def node(command_context, args):
 
 
 def append_env(command_context, append_path=True):
-    fetches = host_fetches[host_platform()]
-
-    # Ensure that `ffmpeg` is found and added to the environment
+    # Preserve the caller's PATH so optional system tools such as FFmpeg
+    # can be found when explicitly requested. No bundled FFmpeg is added.
     path = os.environ.get("PATH", "").split(os.pathsep) if append_path else []
-    path_to_ffmpeg = mozpath.join(
-        state_path(command_context), fetches["ffmpeg"]["path"]
-    )
-
-    path.insert(
-        0,
-        (
-            path_to_ffmpeg
-            if host_platform().startswith("linux")
-            else mozpath.join(path_to_ffmpeg, "bin")
-        ),
-    )  # noqa
 
     # Ensure that bare `node` and `npm` in scripts, including post-install
     # scripts, finds the binary we're invoking with.  Without this, it's

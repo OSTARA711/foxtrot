@@ -13,6 +13,7 @@ import pathlib
 import re
 import subprocess
 import sys
+import shutil
 import tempfile
 from shutil import copyfile, rmtree
 
@@ -68,16 +69,6 @@ RaptorErrorList = (
         },
     ]
 )
-
-# When running raptor locally, we can attempt to make use of
-# the users locally cached ffmpeg binary from from when the user
-# ran `./mach browsertime --setup`
-FFMPEG_LOCAL_CACHE = {
-    "mac": "ffmpeg-macos",
-    "linux": "ffmpeg-4.4.1-i686-static",
-    "win": "ffmpeg-4.4.1-full_build",
-}
-
 
 class Raptor(
     TestingMixin, MercurialScript, CodeCoverageMixin, AndroidMixin, Python3Virtualenv
@@ -750,6 +741,10 @@ class Raptor(
             "cstm-car-m",
         ]
         self.browsertime_visualmetrics = self.config.get("browsertime_visualmetrics")
+        self.browsertime_ffmpeg = self.config.get("browsertime_ffmpeg")
+        self.browsertime_no_ffwindowrecorder = self.config.get(
+            "browsertime_no_ffwindowrecorder", False
+        )
         self.browsertime_node = self.config.get("browsertime_node")
         self.browsertime_user_args = self.config.get("browsertime_user_args")
         self.browsertime_video = False
@@ -1191,10 +1186,12 @@ class Raptor(
 
         if self.run_local and os.path.exists(_virtualenv_path):
             self.info("Virtualenv already exists, skipping creation")
-            # ffmpeg exists outside of this virtual environment so
-            # we re-add it to the platform environment on repeated
-            # local runs of browsertime visual metric tests
-            self.setup_local_ffmpeg()
+
+            if self.browsertime_visualmetrics:
+                self.install_visualmetrics_modules()
+
+            if self.requires_ffmpeg():
+                self.setup_local_ffmpeg()
 
             if "win" in self.platform_name():
                 _path = os.path.join(_virtualenv_path, "Lib", "site-packages")
@@ -1235,41 +1232,11 @@ class Raptor(
 
         modules = ["pip>=1.5"]
 
-        # Add modules required for visual metrics. Packages with non-Python
-        # components are particularly fussy about python version.
-        py3_minor = sys.version_info.minor
-        if py3_minor <= 7:
-            modules.extend(
-                [
-                    "numpy==1.16.1",
-                    "Pillow==6.1.0",
-                    "scipy==1.2.3",
-                    "pyssim==0.4",
-                    "opencv-python==4.5.4.60",
-                ]
-            )
-        elif py3_minor <= 11:
-            modules.extend(
-                [
-                    "numpy==1.23.5",
-                    "Pillow==9.2.0",
-                    "scipy==1.9.3",
-                    "pyssim==0.4",
-                    "opencv-python==4.6.0.66",
-                ]
-            )
-        else:  # python version >= 3.12
-            modules.extend(
-                [
-                    "numpy==2.2.3",
-                    "Pillow==11.1.0",
-                    "scipy==1.15.2",
-                    "pyssim==0.7",
-                    "opencv-python==4.11.0.86",
-                ]
-            )
+        # Visual-metrics dependencies are optional.
+        if self.browsertime_visualmetrics:
+            modules.extend(self.visualmetrics_modules())
 
-        if self.run_local:
+        if self.run_local and self.requires_ffmpeg():
             self.setup_local_ffmpeg()
 
         # Require pip >= 1.5 so pip will prefer .whl files to install
@@ -1278,44 +1245,97 @@ class Raptor(
         # Install Raptor dependencies
         self.install_module(requirements=[raptor_requirements])
 
+    def visualmetrics_modules(self):
+        """Return pinned Python dependencies for visual-metrics processing."""
+        py3_minor = sys.version_info.minor
+
+        if py3_minor <= 7:
+            return [
+                "numpy==1.16.1",
+                "Pillow==6.1.0",
+                "scipy==1.2.3",
+                "pyssim==0.4",
+                "opencv-python==4.5.4.60",
+            ]
+        elif py3_minor <= 11:
+            return [
+                "numpy==1.23.5",
+                "Pillow==9.2.0",
+                "scipy==1.9.3",
+                "pyssim==0.4",
+                "opencv-python==4.6.0.66",
+            ]
+
+        return [
+            "numpy==2.2.3",
+            "Pillow==11.1.0",
+            "scipy==1.15.2",
+            "pyssim==0.7",
+            "opencv-python==4.11.0.86",
+        ]
+
+    def install_visualmetrics_modules(self):
+        """Install only missing or incorrectly versioned visual-metrics packages."""
+        installed = self.package_versions()
+        installed = {
+            name.lower(): version for name, version in installed.items()
+        }
+
+        for requirement in self.visualmetrics_modules():
+            package, version = requirement.split("==", 1)
+
+            if installed.get(package.lower()) != version:
+                self.install_module(module=requirement)
+
+    def requires_ffmpeg(self):
+        """Return whether this Browsertime run needs an FFmpeg executable."""
+        ffmpeg_browser = self.app in (
+            "chrome",
+            "chrome-m",
+            "custom-car",
+            "cstm-car-m",
+        )
+        return bool(
+            self.browsertime_video
+            and (
+                self.browsertime_no_ffwindowrecorder
+                or ffmpeg_browser
+            )
+        )
+
     def setup_local_ffmpeg(self):
-        """Make use of the users local ffmpeg when running browsertime visual
-        metrics tests.
-        """
+        """Use an explicitly supplied or system-installed FFmpeg executable."""
 
-        if "ffmpeg" in os.environ["PATH"]:
-            return
-
-        platform = self.platform_name()
-        btime_cache = os.path.join(self.config["mozbuild_path"], "browsertime")
-        if "mac" in platform:
-            path_to_ffmpeg = os.path.join(
-                btime_cache,
-                FFMPEG_LOCAL_CACHE["mac"],
-            )
-        elif "linux" in platform:
-            path_to_ffmpeg = os.path.join(
-                btime_cache,
-                FFMPEG_LOCAL_CACHE["linux"],
-            )
-        elif "win" in platform:
-            path_to_ffmpeg = os.path.join(
-                btime_cache,
-                FFMPEG_LOCAL_CACHE["win"],
-                "bin",
-            )
-
-        if os.path.exists(path_to_ffmpeg):
-            os.environ["PATH"] += os.pathsep + path_to_ffmpeg
-            self.browsertime_ffmpeg = path_to_ffmpeg
-            self.info(
-                "Added local ffmpeg found at: %s to environment." % path_to_ffmpeg
-            )
+        configured = self.browsertime_ffmpeg
+        if configured:
+            path_to_ffmpeg = os.path.abspath(configured)
+            if not os.path.isfile(path_to_ffmpeg) or not os.access(
+                path_to_ffmpeg, os.X_OK
+            ):
+                raise Exception(
+                    "The configured FFmpeg executable is not executable: "
+                    f"{path_to_ffmpeg}"
+                )
         else:
+            path_to_ffmpeg = shutil.which("ffmpeg")
+
+        if not path_to_ffmpeg:
             raise Exception(
-                "No local ffmpeg binary found. Expected it to be here: %s"
-                % path_to_ffmpeg
+                "This Browsertime configuration requires FFmpeg, but no "
+                "system FFmpeg executable was found. Install FFmpeg or "
+                "provide its executable path with --browsertime-ffmpeg."
             )
+
+        self.browsertime_ffmpeg = os.path.abspath(path_to_ffmpeg)
+        ffmpeg_dir = os.path.dirname(self.browsertime_ffmpeg)
+        current_path = os.environ.get("PATH", "").split(os.pathsep)
+
+        if ffmpeg_dir not in current_path:
+            os.environ["PATH"] = os.pathsep.join(
+                [ffmpeg_dir] + current_path
+            )
+
+        self.info("Using FFmpeg executable: %s" % self.browsertime_ffmpeg)
 
     def install(self):
         if not self.config.get("no_install", False):

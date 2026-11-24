@@ -75,8 +75,6 @@ import config94 from "./security/.eslintrc.mjs";
 import config95 from "./security/manager/ssl/tests/.eslintrc.mjs";
 import config96 from "./security/manager/tools/.eslintrc.mjs";
 import config97 from "./services/sync/tests/tps/.eslintrc.mjs";
-import config98 from "./taskcluster/docker/index-task/.eslintrc.mjs";
-import config99 from "./taskcluster/docker/periodic-updates/.eslintrc.mjs";
 import config100 from "./testing/talos/talos/tests/perf-reftest-singletons/.eslintrc.mjs";
 import config101 from "./testing/mozbase/mozprofile/tests/files/dummy-profile/.eslintrc.mjs";
 import config102 from "./testing/performance/.eslintrc.mjs";
@@ -256,8 +254,6 @@ export default [
   ...convertConfigurationFile("security/manager/ssl/tests/", config95),
   ...convertConfigurationFile("security/manager/tools/", config96),
   ...convertConfigurationFile("services/sync/tests/tps/", config97),
-  ...convertConfigurationFile("taskcluster/docker/index-task/", config98),
-  ...convertConfigurationFile("taskcluster/docker/periodic-updates/", config99),
   ...convertConfigurationFile(
     "testing/talos/talos/tests/perf-reftest-singletons/",
     config100

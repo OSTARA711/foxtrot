@@ -1,27 +1,17 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
-import json
 import os
 import pathlib
 import re
 
-from gecko_taskgraph.util.attributes import match_run_on_projects
 from manifestparser import TestManifest
 from mozperftest.script import ScriptInfo
 
-from perfdocs.doc_helpers import TableBuilder
 from perfdocs.logger import PerfDocLogger
 from perfdocs.utils import read_yaml
 
 logger = PerfDocLogger()
-
-BRANCHES = [
-    "mozilla-central",
-    "autoland",
-    "mozilla-release",
-    "mozilla-beta",
-]
 
 """
 This file is for framework specific gatherers since manifests
@@ -35,21 +25,18 @@ class FrameworkGatherer:
     Abstract class for framework gatherers.
     """
 
-    def __init__(self, yaml_path, workspace_dir, taskgraph={}):
+    def __init__(self, yaml_path, workspace_dir):
         """
         Generic initialization for a framework gatherer.
         """
         self.workspace_dir = workspace_dir
         self._yaml_path = yaml_path
-        self._taskgraph = taskgraph
         self._suite_list = {}
         self._test_list = {}
         self._descriptions = {}
         self._manifest_path = ""
         self._manifest = None
         self.script_infos = {}
-        self._task_list = {}
-        self._task_match_pattern = re.compile(r"([\w\W]*/[pgo|opt]*)-([\w\W]*)")
 
     def _build_section_with_header(self, title, content, header_type=None):
         """
@@ -82,9 +69,6 @@ class FrameworkGatherer:
                     return metric_heading
 
         raise Exception(f"Could not find a metric heading for `{metric}`")
-
-    def get_task_match(self, task_name):
-        return re.search(self._task_match_pattern, task_name)
 
     def get_manifest_path(self):
         """
@@ -195,27 +179,6 @@ class RaptorGatherer(FrameworkGatherer):
 
         return self._suite_list
 
-    def _get_ci_tasks(self):
-        for task in self._taskgraph.keys():
-            if type(self._taskgraph[task]) is dict:
-                command = self._taskgraph[task]["task"]["payload"].get("command", [])
-                run_on_projects = self._taskgraph[task]["attributes"]["run_on_projects"]
-            else:
-                command = self._taskgraph[task].task["payload"].get("command", [])
-                run_on_projects = self._taskgraph[task].attributes["run_on_projects"]
-
-            test_match = re.search(r"[\s']--test[\s=](.+?)[\s']", str(command))
-            task_match = self.get_task_match(task)
-            if test_match and task_match:
-                test = test_match.group(1)
-                platform = task_match.group(1)
-                test_name = task_match.group(2)
-
-                item = {"test_name": test_name, "run_on_projects": run_on_projects}
-                self._task_list.setdefault(test, {}).setdefault(platform, []).append(
-                    item
-                )
-
     def _get_subtests_from_ini(self, manifest_path, suite_name):
         """
         Returns a list of (sub)tests from an ini file containing the test definitions.
@@ -311,7 +274,6 @@ class RaptorGatherer(FrameworkGatherer):
                 subtest_list = self._get_subtests_from_ini(manifest_path, suite_name)
                 self._test_list[suite_name].update(subtest_list)
 
-        self._get_ci_tasks()
 
         return self._test_list
 
@@ -391,32 +353,6 @@ class RaptorGatherer(FrameworkGatherer):
                     if "\n" in description[key]:
                         description[key] = description[key].replace("\n", " ")
                     result += f"   * **{sub_title}**: {description[key]}\n"
-
-            if self._task_list.get(title, []):
-                result += "   * **Test Task**:\n\n"
-                for platform in sorted(self._task_list[title]):
-                    self._task_list[title][platform].sort(key=lambda x: x["test_name"])
-
-                    table = TableBuilder(
-                        title=platform,
-                        widths=[30] + [15 for x in BRANCHES],
-                        header_rows=1,
-                        headers=[["Test Name"] + BRANCHES],
-                        indent=3,
-                    )
-
-                    for task in self._task_list[title][platform]:
-                        values = [task["test_name"]]
-                        values += [
-                            (
-                                "\u2705"
-                                if match_run_on_projects(x, task["run_on_projects"])
-                                else "\u274C"
-                            )
-                            for x in BRANCHES
-                        ]
-                        table.add_row(values)
-                    result += f"{table.finish_table()}\n"
 
         return [result]
 
@@ -517,37 +453,6 @@ class MozperftestGatherer(FrameworkGatherer):
 
 
 class TalosGatherer(FrameworkGatherer):
-    def _get_ci_tasks(self):
-        with open(
-            pathlib.Path(self.workspace_dir, "testing", "talos", "talos.json")
-        ) as f:
-            config_suites = json.load(f)["suites"]
-
-        for task_name in self._taskgraph.keys():
-            task = self._taskgraph[task_name]
-
-            if type(task) is dict:
-                is_talos = task["task"]["extra"].get("suite", [])
-                command = task["task"]["payload"].get("command", [])
-                run_on_projects = task["attributes"]["run_on_projects"]
-            else:
-                is_talos = task.task["extra"].get("suite", [])
-                command = task.task["payload"].get("command", [])
-                run_on_projects = task.attributes["run_on_projects"]
-
-            suite_match = re.search(r"[\s']--suite[\s=](.+?)[\s']", str(command))
-            task_match = self.get_task_match(task_name)
-            if "talos" == is_talos and task_match:
-                suite = suite_match.group(1)
-                platform = task_match.group(1)
-                test_name = task_match.group(2)
-                item = {"test_name": test_name, "run_on_projects": run_on_projects}
-
-                for test in config_suites[suite]["tests"]:
-                    self._task_list.setdefault(test, {}).setdefault(
-                        platform, []
-                    ).append(item)
-
     def get_test_list(self):
         from talos import test as talos_test
 
@@ -562,7 +467,6 @@ class TalosGatherer(FrameworkGatherer):
             klass = getattr(mod, test)
             self._descriptions.setdefault(test, klass.__dict__)
 
-        self._get_ci_tasks()
 
         return self._test_list
 
@@ -610,32 +514,6 @@ class TalosGatherer(FrameworkGatherer):
                             value[k] = str(v).replace("\\", r"/")
                 result += r"   * " + key + r": " + str(value) + r"\n"
 
-        if self._task_list.get(title, []):
-            result += "   * **Test Task**:\n\n"
-            for platform in sorted(self._task_list[title]):
-                self._task_list[title][platform].sort(key=lambda x: x["test_name"])
-
-                table = TableBuilder(
-                    title=platform,
-                    widths=[30] + [15 for x in BRANCHES],
-                    header_rows=1,
-                    headers=[["Test Name"] + BRANCHES],
-                    indent=3,
-                )
-
-                for task in self._task_list[title][platform]:
-                    values = [task["test_name"]]
-                    values += [
-                        (
-                            "\u2705"
-                            if match_run_on_projects(x, task["run_on_projects"])
-                            else "\u274C"
-                        )
-                        for x in BRANCHES
-                    ]
-                    table.add_row(values)
-                result += f"{table.finish_table()}\n"
-
         return [result]
 
     def build_suite_section(self, title, content):
@@ -647,31 +525,11 @@ class AwsyGatherer(FrameworkGatherer):
     Gatherer for the Awsy framework.
     """
 
-    def _generate_ci_tasks(self):
-        for task_name in self._taskgraph.keys():
-            task = self._taskgraph[task_name]
-
-            if type(task) is dict:
-                awsy_test = task["task"]["extra"].get("suite", [])
-                run_on_projects = task["attributes"]["run_on_projects"]
-            else:
-                awsy_test = task.task["extra"].get("suite", [])
-                run_on_projects = task.attributes["run_on_projects"]
-
-            task_match = self.get_task_match(task_name)
-
-            if "awsy" in awsy_test and task_match:
-                platform = task_match.group(1)
-                test_name = task_match.group(2)
-                item = {"test_name": test_name, "run_on_projects": run_on_projects}
-                self._task_list.setdefault(platform, []).append(item)
-
     def get_suite_list(self):
         self._suite_list = {"Awsy tests": ["tp6", "base", "dmd", "tp5"]}
         return self._suite_list
 
     def get_test_list(self):
-        self._generate_ci_tasks()
         return {
             "Awsy tests": {
                 "tp6": {},
@@ -699,27 +557,6 @@ class AwsyGatherer(FrameworkGatherer):
         awsy_data = read_yaml(self._yaml_path)["suites"]["Awsy tests"]
         if "owner" in awsy_data.keys():
             result += f"   **Owner**: {awsy_data['owner']}\n\n"
-        result += "   * **Test Task**:\n"
-
-        # tp5 tests are represented by awsy-e10s test names
-        # while the others have their title in test names
-        search_tag = "awsy-e10s" if title == "tp5" else title
-        for platform in sorted(self._task_list.keys()):
-            result += f"      * {platform}\n"
-            for test_dict in sorted(
-                self._task_list[platform], key=lambda d: d["test_name"]
-            ):
-                if search_tag in test_dict["test_name"]:
-                    run_on_project = ": " + (
-                        ", ".join(test_dict["run_on_projects"])
-                        if test_dict["run_on_projects"]
-                        else "None"
-                    )
-                    result += (
-                        f"            * {test_dict['test_name']}{run_on_project}\n"
-                    )
-            result += "\n"
-
         return [result]
 
 

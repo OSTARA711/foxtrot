@@ -32,6 +32,7 @@ BROWSERTIME_PAGELOAD_OUTPUT_TIMEOUT = 120  # 2 minutes
 BROWSERTIME_BENCHMARK_OUTPUT_TIMEOUT = (
     None  # Disable output timeout for benchmark tests
 )
+BROWSERTIME_DEBUG_TIMEOUT = 86400  # 24 hours
 
 
 @six.add_metaclass(ABCMeta)
@@ -788,7 +789,7 @@ class Browsertime(Perftest):
 
     def _compute_process_timeout(self, test, timeout, cmd):
         if self.debug_mode:
-            return sys.maxsize
+            return BROWSERTIME_DEBUG_TIMEOUT
 
         # bt_timeout will be the overall browsertime cmd/session timeout (seconds)
         # browsertime deals with page cycles internally, so we need to give it a timeout
@@ -967,7 +968,7 @@ class Browsertime(Perftest):
             output_timeout = BROWSERTIME_BENCHMARK_OUTPUT_TIMEOUT
 
         if self.debug_mode:
-            output_timeout = 2147483647
+            output_timeout = BROWSERTIME_DEBUG_TIMEOUT
 
         LOG.info(f"timeout (s): {timeout}")
         LOG.info(f"browsertime cwd: {os.getcwd()}")

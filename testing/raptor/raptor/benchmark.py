@@ -240,6 +240,35 @@ class Benchmark:
         )
         subprocess.check_call(["git", "pull"], cwd=external_repo_path)
 
+    def _is_valid_benchmark_repo(self, external_repo_path, benchmark_repository):
+        """Check that a cached benchmark repository is a usable Git checkout."""
+        try:
+            is_work_tree = subprocess.check_output(
+                ["git", "rev-parse", "--is-inside-work-tree"],
+                cwd=external_repo_path,
+            ).decode("utf-8").strip()
+
+            if is_work_tree != "true":
+                return False
+
+            head = subprocess.check_output(
+                ["git", "rev-parse", "--verify", "HEAD^{commit}"],
+                cwd=external_repo_path,
+            ).decode("utf-8").strip()
+
+            if not head:
+                return False
+
+            origin = subprocess.check_output(
+                ["git", "config", "--get", "remote.origin.url"],
+                cwd=external_repo_path,
+            ).decode("utf-8").strip()
+
+            return origin == benchmark_repository
+
+        except (OSError, subprocess.CalledProcessError, UnicodeDecodeError):
+            return False
+
     def _setup_git_benchmarks(self, mozbuild_path, benchmark_dest, run_local=True):
         """Setup a benchmark from a github repository."""
         benchmark_repository = self.test["repository"]
@@ -267,30 +296,21 @@ class Benchmark:
             )
             raise ex
 
-        if not external_repo_path.is_dir():
+        if external_repo_path.is_dir() and self._is_valid_benchmark_repo(
+            external_repo_path, benchmark_repository
+        ):
+            self._update_benchmark_repo(external_repo_path)
+        else:
+            if external_repo_path.exists() or external_repo_path.is_symlink():
+                LOG.info(
+                    "Removing an invalid or mismatched benchmark repository cache"
+                )
+                mozfile.remove(str(external_repo_path))
+
             LOG.info(f"Cloning the benchmarks to {external_repo_path}")
             # Bug 1804694 - Use sparse checkouts instead of full clones
             # Locally, we should always do a full clone
             self._full_clone(benchmark_repository, external_repo_path)
-        else:
-            # Make sure that the repo origin wasn't changed
-            url = (
-                subprocess.check_output(
-                    ["git", "config", "--get", "remote.origin.url"],
-                    cwd=external_repo_path,
-                )
-                .decode("utf-8")
-                .strip()
-            )
-
-            if url != benchmark_repository:
-                LOG.info(
-                    "Removing repo with a different remote origin before installing new one"
-                )
-                mozfile.remove(external_repo_path)
-                self._full_clone(benchmark_repository, external_repo_path)
-            else:
-                self._update_benchmark_repo(external_repo_path)
 
         self._verify_benchmark_revision(benchmark_revision, external_repo_path)
         subprocess.check_call(

@@ -178,16 +178,12 @@ def setup_sample_logger(logger, structured_logger, top_dir):
     gn.logger = logger
 
 
-@mock.patch("taskgraph.util.taskcluster.get_artifact")
-@mock.patch("tryselect.tasks.generate_tasks")
 @mock.patch("perfdocs.generator.Generator")
 @mock.patch("perfdocs.verifier.Verifier")
 @mock.patch("perfdocs.logger.PerfDocLogger", new=PerfDocsLoggerMock)
 def test_perfdocs_start_and_fail(
     verifier,
     generator,
-    get_artifact_mock,
-    gen_tasks_mock,
     structured_logger,
     config,
     paths,
@@ -207,8 +203,6 @@ def test_perfdocs_start_and_fail(
     assert generator.call_count == 0
 
 
-@mock.patch("taskgraph.util.taskcluster.get_artifact")
-@mock.patch("tryselect.tasks.generate_tasks")
 @mock.patch("perfdocs.generator.Generator")
 @mock.patch("perfdocs.verifier.Verifier")
 @mock.patch("perfdocs.logger.PerfDocLogger", new=PerfDocsLoggerMock)
@@ -794,7 +788,6 @@ def test_perfdocs_framework_gatherers(logger, structured_logger, perfdocs_sample
             }
 
         if framework == "talos":
-            fg._get_ci_tasks = mock.Mock()
             for suite, suitetests in fg.get_test_list().items():
                 assert suite == "Talos Tests"
                 assert suitetests

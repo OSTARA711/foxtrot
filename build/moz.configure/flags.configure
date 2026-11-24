@@ -141,11 +141,8 @@ def linker_supports_icf(c_compiler, linker_ldflags, llvm_objdump):
                 return foo_addr == bar_addr and foo_addr is not None
 
 
-@depends(compilation_flags, linker_flags, add_addrsig_flag, when=linker_supports_icf)
-def add_icf_flags(compilation_flags, linker_flags, add_addrsig_flag):
-    if add_addrsig_flag:
-        compilation_flags.cflags.append("-faddrsig")
-        compilation_flags.cxxflags.append("-faddrsig")
+@depends(compilation_flags, linker_flags, when=linker_supports_icf)
+def add_icf_flags(compilation_flags, linker_flags):
     linker_flags.ldflags.append("-Wl,--icf=safe")
 
 

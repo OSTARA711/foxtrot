@@ -84,7 +84,7 @@ class Verifier:
     descriptions that can be used to build up a document.
     """
 
-    def __init__(self, workspace_dir, taskgraph=None):
+    def __init__(self, workspace_dir):
         """
         Initialize the Verifier.
 
@@ -92,7 +92,7 @@ class Verifier:
         """
         self.workspace_dir = workspace_dir
         self.metrics_info = {}
-        self._gatherer = Gatherer(workspace_dir, taskgraph)
+        self._gatherer = Gatherer(workspace_dir)
         self._compiled_matchers = {}
 
     def _is_yaml_test_match(

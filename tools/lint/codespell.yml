@@ -39,7 +39,6 @@ codespell:
         - remote/doc/
         - security/manager/locales/en-US/
         - services/settings/docs/
-        - taskcluster/docs/
         - testing/docs/xpcshell/
         - testing/geckodriver/doc/
         - testing/mozbase/docs/
