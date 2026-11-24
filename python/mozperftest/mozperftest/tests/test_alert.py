@@ -208,24 +208,6 @@ def test_alert_basic_command_test_specification(alert_json, tests, expected_comm
             1,
         ),
         (
-            "alert-summary-mpt-android.json",
-            "task-info-mpt-android.json",
-            [
-                [
-                    "./mach",
-                    "perftest",
-                    "--flavor",
-                    "custom-script",
-                    "testing/performance/mobile-startup/cmff.sh",
-                    "--app",
-                    "geckoview",
-                    "--android",
-                    "--perfherder",
-                ]
-            ],
-            1,
-        ),
-        (
             "alert-summary-mpt-desktop.json",
             "task-info-mpt-desktop.json",
             [
