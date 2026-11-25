@@ -2011,13 +2011,6 @@ class nsIWidget : public nsISupports {
     MOZ_ASSERT(false, "This function should only execute in Windows");
   }
 
-  /**
-   * NotifyCompositorScrollUpdate notify widget about an update to the
-   * composited scroll offset and zoom
-   */
-  virtual void NotifyCompositorScrollUpdate(
-      const mozilla::layers::CompositorScrollUpdate& aUpdate) = 0;
-
 #if defined(MOZ_WIDGET_ANDROID)
   /**
    * RecvToolbarAnimatorMessageFromCompositor receive message from compositor

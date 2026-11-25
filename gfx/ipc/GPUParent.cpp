@@ -54,7 +54,6 @@
 #include "mozilla/layers/ImageBridgeParent.h"
 #include "mozilla/layers/LayerTreeOwnerTracker.h"
 #include "mozilla/layers/RemoteTextureMap.h"
-#include "mozilla/layers/UiCompositorControllerParent.h"
 #include "mozilla/layers/VideoBridgeParent.h"
 #include "mozilla/webrender/RenderThread.h"
 #include "mozilla/webrender/WebRenderAPI.h"
@@ -493,13 +492,6 @@ mozilla::ipc::IPCResult GPUParent::RecvInitVRManager(
 mozilla::ipc::IPCResult GPUParent::RecvInitVR(
     Endpoint<PVRGPUChild>&& aEndpoint) {
   gfx::VRGPUChild::InitForGPUProcess(std::move(aEndpoint));
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult GPUParent::RecvInitUiCompositorController(
-    const LayersId& aRootLayerTreeId,
-    Endpoint<PUiCompositorControllerParent>&& aEndpoint) {
-  UiCompositorControllerParent::Start(aRootLayerTreeId, std::move(aEndpoint));
   return IPC_OK();
 }
 

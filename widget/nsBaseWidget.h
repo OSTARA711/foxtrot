@@ -408,9 +408,6 @@ class nsBaseWidget : public nsIWidget, public nsSupportsWeakReference {
   void NotifyLiveResizeStarted();
   void NotifyLiveResizeStopped();
 
-  void NotifyCompositorScrollUpdate(
-      const mozilla::layers::CompositorScrollUpdate& aUpdate) override {};
-
 #if defined(MOZ_WIDGET_ANDROID)
   void RecvToolbarAnimatorMessageFromCompositor(int32_t) override {};
   void RecvScreenPixels(mozilla::ipc::Shmem&& aMem, const ScreenIntSize& aSize,

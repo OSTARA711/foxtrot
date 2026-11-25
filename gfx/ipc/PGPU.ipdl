@@ -16,7 +16,6 @@ include protocol PVRGPU;
 include protocol PVRManager;
 include protocol PVideoBridge;
 include protocol PVsyncBridge;
-include protocol PUiCompositorController;
 include protocol PRemoteDecoderManager;
 
 #if defined(MOZ_SANDBOX) && defined(MOZ_DEBUG) && defined(ENABLE_TESTS)
@@ -73,7 +72,6 @@ parent:
   async InitImageBridge(Endpoint<PImageBridgeParent> endpoint, uint32_t aNamespace);
   async InitVideoBridge(Endpoint<PVideoBridgeParent> endpoint, VideoBridgeSource aSource);
   async InitVRManager(Endpoint<PVRManagerParent> endpoint, uint32_t aNamespace);
-  async InitUiCompositorController(LayersId rootLayerTreeId, Endpoint<PUiCompositorControllerParent> endpoint);
   async InitAPZInputBridge(LayersId layersId,
                            Endpoint<PAPZInputBridgeParent> endpoint);
   async InitProfiler(Endpoint<PProfilerChild> endpoint);

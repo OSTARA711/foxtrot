@@ -37,7 +37,6 @@
 #include "mozilla/layers/DoubleTapToZoom.h"         // for ZoomTarget
 #include "mozilla/layers/MatrixMessage.h"
 #include "mozilla/layers/ScrollableLayerGuid.h"
-#include "mozilla/layers/UiCompositorControllerParent.h"
 #include "mozilla/layers/WebRenderScrollDataWrapper.h"
 #include "mozilla/MouseEvents.h"
 #include "mozilla/mozalloc.h"     // for operator new
@@ -890,16 +889,6 @@ void APZCTreeManager::SampleForWebRender(const Maybe<VsyncId>& aVsyncId,
       aTxn.AddMinimapData(scrollId, minimapData);
     }
 
-    if (apzc->IsRootContent()) {
-      // Send the root frame metrics to java through the UIController
-      if (RefPtr<UiCompositorControllerParent> uiController =
-              UiCompositorControllerParent::GetFromRootLayerTreeId(
-                  mRootLayersId)) {
-        for (const auto& update : apzc->GetCompositorScrollUpdates()) {
-          uiController->NotifyCompositorScrollUpdate(update);
-        }
-      }
-    }
   }
 
   // Now collect all the async transforms needed for the scrollthumbs.

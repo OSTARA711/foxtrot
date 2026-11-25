@@ -72,10 +72,6 @@
 #include "mozilla/net/UrlClassifierFeatureFactory.h"
 #include "mozilla/ExtensionPolicyService.h"
 
-#ifdef ANDROID
-#  include "mozilla/widget/nsWindow.h"
-#endif /* ANDROID */
-
 mozilla::LazyLogModule gDocumentChannelLog("DocumentChannel");
 #define LOG(fmt) MOZ_LOG(gDocumentChannelLog, mozilla::LogLevel::Verbose, fmt)
 

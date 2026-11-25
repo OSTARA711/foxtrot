@@ -42,7 +42,6 @@
 #include "mozilla/layers/SharedSurfacesParent.h"
 #include "mozilla/layers/TextureHost.h"
 #include "mozilla/layers/AsyncImagePipelineManager.h"
-#include "mozilla/layers/UiCompositorControllerParent.h"
 #include "mozilla/layers/WebRenderImageHost.h"
 #include "mozilla/layers/WebRenderTextureHost.h"
 #include "mozilla/ProfilerMarkerTypes.h"
@@ -340,9 +339,6 @@ WebRenderBridgeParent::WebRenderBridgeParent(
       mVsyncRate(aVsyncRate),
       mWrEpoch{0},
       mIdNamespace(aApi->GetNamespace()),
-#if defined(MOZ_WIDGET_ANDROID)
-      mScreenPixelsTarget(nullptr),
-#endif
       mBlobTileSize(256),
       mSkippedCompositeReasons(wr::RenderReasons::NONE),
       mDestroyed(false),
@@ -1783,56 +1779,6 @@ void WebRenderBridgeParent::UpdateBoolParameters() {
   mBoolParameterBits = bits;
 }
 
-#if defined(MOZ_WIDGET_ANDROID)
-void WebRenderBridgeParent::RequestScreenPixels(
-    UiCompositorControllerParent* aController) {
-  mScreenPixelsTarget = aController;
-}
-
-void WebRenderBridgeParent::MaybeCaptureScreenPixels() {
-  if (!mScreenPixelsTarget) {
-    return;
-  }
-
-  if (mDestroyed) {
-    return;
-  }
-
-  if (auto* cbp = GetRootCompositorBridgeParent()) {
-    cbp->FlushPendingWrTransactionEventsWithWait();
-  }
-
-  // This function should only get called in the root WRBP.
-  MOZ_ASSERT(IsRootWebRenderBridgeParent());
-#  ifdef DEBUG
-  CompositorBridgeParent* cbp = GetRootCompositorBridgeParent();
-  MOZ_ASSERT(cbp && !cbp->IsPaused());
-#  endif
-
-  SurfaceFormat format = SurfaceFormat::R8G8B8A8;  // On android we use RGBA8
-  auto client_size = mWidget->GetClientSize();
-  size_t buffer_size =
-      client_size.width * client_size.height * BytesPerPixel(format);
-
-  ipc::Shmem mem;
-  if (!mScreenPixelsTarget->AllocPixelBuffer(buffer_size, &mem)) {
-    // Failed to alloc shmem, Just bail out.
-    return;
-  }
-
-  IntSize size(client_size.width, client_size.height);
-
-  bool needsYFlip = false;
-  mApi->Readback(TimeStamp::Now(), size, format,
-                 Range<uint8_t>(mem.get<uint8_t>(), buffer_size), &needsYFlip);
-
-  Unused << mScreenPixelsTarget->SendScreenPixels(
-      std::move(mem), ScreenIntSize(client_size.width, client_size.height),
-      needsYFlip);
-
-  mScreenPixelsTarget = nullptr;
-}
-#endif
 
 mozilla::ipc::IPCResult WebRenderBridgeParent::RecvGetSnapshot(
     NotNull<PTextureParent*> aTexture, bool* aNeedsYFlip) {
@@ -2540,9 +2486,6 @@ void WebRenderBridgeParent::MaybeGenerateFrame(VsyncId aId,
 
   mApi->SendTransaction(fastTxn);
 
-#if defined(MOZ_WIDGET_ANDROID)
-  MaybeCaptureScreenPixels();
-#endif
 
   mMostRecentComposite = TimeStamp::Now();
 
@@ -2689,8 +2632,8 @@ static void RecordPaintPhaseTelemetry(wr::RendererStats* aStats) {
 void WebRenderBridgeParent::FlushTransactionIdsForEpoch(
     const wr::Epoch& aEpoch, const VsyncId& aCompositeStartId,
     const TimeStamp& aCompositeStartTime, const TimeStamp& aRenderStartTime,
-    const TimeStamp& aEndTime, UiCompositorControllerParent* aUiController,
-    wr::RendererStats* aStats, nsTArray<FrameStats>& aOutputStats,
+    const TimeStamp& aEndTime, wr::RendererStats* aStats,
+    nsTArray<FrameStats>& aOutputStats,
     nsTArray<TransactionId>& aOutputTransactions) {
   while (!mPendingTransactionIds.empty()) {
     const auto& transactionId = mPendingTransactionIds.front();
@@ -2746,9 +2689,6 @@ void WebRenderBridgeParent::FlushTransactionIdsForEpoch(
     }
 #endif
 
-    if (aUiController && transactionId.mIsFirstPaint) {
-      aUiController->NotifyFirstPaint();
-    }
 
     RecordCompositionPayloadsPresented(aEndTime, transactionId.mPayloads);
 

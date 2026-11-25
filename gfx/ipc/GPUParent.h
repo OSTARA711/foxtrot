@@ -65,9 +65,6 @@ class GPUParent final : public PGPUParent {
   mozilla::ipc::IPCResult RecvInitVRManager(
       Endpoint<PVRManagerParent>&& aEndpoint, uint32_t aNamespace);
   mozilla::ipc::IPCResult RecvInitVR(Endpoint<PVRGPUChild>&& aVRGPUChild);
-  mozilla::ipc::IPCResult RecvInitUiCompositorController(
-      const LayersId& aRootLayerTreeId,
-      Endpoint<PUiCompositorControllerParent>&& aEndpoint);
   mozilla::ipc::IPCResult RecvInitAPZInputBridge(
       const LayersId& aRootLayerTreeId,
       Endpoint<PAPZInputBridgeParent>&& aEndpoint);

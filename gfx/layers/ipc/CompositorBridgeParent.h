@@ -68,7 +68,6 @@ class OMTASampler;
 class ContentCompositorBridgeParent;
 class CompositorThreadHolder;
 class InProcessCompositorSession;
-class UiCompositorControllerParent;
 class WebRenderBridgeParent;
 class WebRenderScrollDataWrapper;
 struct CollectedFrames;
@@ -357,15 +356,6 @@ class CompositorBridgeParent final : public CompositorBridgeParentBase,
 
   void ObserveLayersUpdate(LayersId aLayersId, bool aActive) override {}
 
-  /**
-   * This forces the is-first-paint flag to true. This is intended to
-   * be called by the widget code when it loses its viewport information
-   * (or for whatever reason wants to refresh the viewport information).
-   * The information refresh happens because the compositor will call
-   * SetFirstPaintViewport on the next frame of composition.
-   */
-  void ForceIsFirstPaint();
-
   void NotifyChildCreated(LayersId aChild);
 
   void AsyncRender();
@@ -420,7 +410,6 @@ class CompositorBridgeParent final : public CompositorBridgeParentBase,
     ContentCompositorBridgeParent* mContentCompositorBridgeParent;
 
     CompositorController* GetCompositorController() const;
-    RefPtr<UiCompositorControllerParent> mUiControllerParent;
   };
 
   /**
@@ -628,7 +617,6 @@ class CompositorBridgeParent final : public CompositorBridgeParentBase,
 
   bool mPaused;
   bool mHaveCompositionRecorder;
-  bool mIsForcedFirstPaint;
 
   bool mUseExternalSurfaceSize;
   gfx::IntSize mEGLSurfaceSize;

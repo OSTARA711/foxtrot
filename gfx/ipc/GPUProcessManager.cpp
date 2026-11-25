@@ -56,12 +56,6 @@
 #include "nsExceptionHandler.h"
 #include "nsPrintfCString.h"
 
-#if defined(MOZ_WIDGET_ANDROID)
-#  include "mozilla/java/SurfaceControlManagerWrappers.h"
-#  include "mozilla/widget/AndroidUiThread.h"
-#  include "mozilla/layers/UiCompositorControllerChild.h"
-#endif  // defined(MOZ_WIDGET_ANDROID)
-
 #if defined(XP_WIN)
 #  include "gfxWindowsPlatform.h"
 #endif
@@ -130,8 +124,6 @@ GPUProcessManager::Observer::Observer() {
   nsContentUtils::RegisterShutdownObserver(this);
   Preferences::AddStrongObserver(this, "");
   if (nsCOMPtr<nsIObserverService> obsServ = services::GetObserverService()) {
-    obsServ->AddObserver(this, "application-foreground", false);
-    obsServ->AddObserver(this, "application-background", false);
     obsServ->AddObserver(this, "screen-information-changed", false);
     obsServ->AddObserver(this, "xpcom-will-shutdown", false);
   }
@@ -141,8 +133,6 @@ void GPUProcessManager::Observer::Shutdown() {
   nsContentUtils::UnregisterShutdownObserver(this);
   Preferences::RemoveObserver(this, "");
   if (nsCOMPtr<nsIObserverService> obsServ = services::GetObserverService()) {
-    obsServ->RemoveObserver(this, "application-foreground");
-    obsServ->RemoveObserver(this, "application-background");
     obsServ->RemoveObserver(this, "screen-information-changed");
     obsServ->RemoveObserver(this, "xpcom-will-shutdown");
   }
@@ -165,13 +155,6 @@ void GPUProcessManager::NotifyObserve(const char* aTopic,
     ShutdownInternal();
   } else if (!strcmp(aTopic, "nsPref:changed")) {
     OnPreferenceChange(aData);
-  } else if (!strcmp(aTopic, "application-foreground")) {
-    mAppInForeground = true;
-    if (!mProcess && gfxConfig::IsEnabled(Feature::GPU_PROCESS)) {
-      Unused << LaunchGPUProcess();
-    }
-  } else if (!strcmp(aTopic, "application-background")) {
-    mAppInForeground = false;
   } else if (!strcmp(aTopic, "screen-information-changed")) {
     ScreenInformationChanged();
   }
@@ -235,17 +218,6 @@ void GPUProcessManager::ResetProcessStable() {
 }
 
 bool GPUProcessManager::IsProcessStable(const TimeStamp& aNow) {
-#ifdef MOZ_WIDGET_ANDROID
-  // On Android if the process is lost whilst in the background it was probably
-  // killed by the OS, and it may never have had a chance to have been declared
-  // stable prior to being killed. We don't want this happening repeatedly to
-  // result in the GPU process being disabled, so treat any process lost whilst
-  // in the background as stable.
-  if (!mAppInForeground) {
-    return true;
-  }
-#endif
-
   if (mTotalProcessAttempts > 0) {
     auto delta = (int32_t)(aNow - mProcessAttemptLastTime).ToMilliseconds();
     if (delta < StaticPrefs::layers_gpu_process_stable_min_uptime_ms()) {
@@ -537,43 +509,6 @@ bool GPUProcessManager::EnsureVRManager() {
   VRManagerChild::InitWithGPUProcess(std::move(childPipe), vrNamespace);
   return true;
 }
-
-#if defined(MOZ_WIDGET_ANDROID)
-already_AddRefed<UiCompositorControllerChild>
-GPUProcessManager::CreateUiCompositorController(nsBaseWidget* aWidget,
-                                                const LayersId aId) {
-  RefPtr<UiCompositorControllerChild> result;
-
-  nsresult rv = EnsureGPUReady();
-  if (NS_WARN_IF(rv == NS_ERROR_ILLEGAL_DURING_SHUTDOWN)) {
-    return nullptr;
-  }
-
-  if (NS_FAILED(rv)) {
-    result = UiCompositorControllerChild::CreateForSameProcess(aId, aWidget);
-  } else {
-    ipc::Endpoint<PUiCompositorControllerParent> parentPipe;
-    ipc::Endpoint<PUiCompositorControllerChild> childPipe;
-    rv = PUiCompositorController::CreateEndpoints(
-        mGPUChild->OtherEndpointProcInfo(), ipc::EndpointProcInfo::Current(),
-        &parentPipe, &childPipe);
-    if (NS_FAILED(rv)) {
-      DisableGPUProcess("Failed to create PUiCompositorController endpoints");
-      return nullptr;
-    }
-
-    mGPUChild->SendInitUiCompositorController(aId, std::move(parentPipe));
-    result = UiCompositorControllerChild::CreateForGPUProcess(
-        mProcessToken, std::move(childPipe), aWidget);
-
-    if (result) {
-      result->SetCompositorSurfaceManager(
-          mProcess->GetCompositorSurfaceManager());
-    }
-  }
-  return result.forget();
-}
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
 void GPUProcessManager::OnProcessLaunchComplete(GPUProcessHost* aHost) {
   MOZ_ASSERT(mProcess && mProcess == aHost);
@@ -977,9 +912,7 @@ void GPUProcessManager::HandleProcessLost() {
   //
   //  (4) At this point, the UI process has a clean slate: no layers should
   //      exist for the old compositor. We may make a decision on whether or not
-  //      to re-launch the GPU process. Or, on Android if the app is in the
-  //      background we may decide to wait until it comes to the foreground
-  //      before re-launching.
+  //      to re-launch the GPU process.
   //
   //  (5) When we do decide to re-launch, or continue without a GPU process, we
   //      notify each ContentParent of the lost connection. It will request new
@@ -1020,27 +953,13 @@ void GPUProcessManager::HandleProcessLost() {
   //  (8) Last, if the window had no remote tabs, step (7) will not have
   //      applied, and the window will not have a new compositor just yet. The
   //      next refresh tick and paint will ensure that one exists, again via
-  //      nsIWidget::GetWindowRenderer. On Android, we called
-  //      nsIWidgetListener::RequestRepaint back in step (3) to ensure this
-  //      tick occurs, but on other platforms this is not necessary.
+  //      nsIWidget::GetWindowRenderer.
 
   DestroyRemoteCompositorSessions();
 
-#ifdef MOZ_WIDGET_ANDROID
-  java::SurfaceControlManager::GetInstance()->OnGpuProcessLoss();
-#endif
-
-  // Re-launch the process if immediately if the GPU process is still enabled.
-  // Except on Android if the app is in the background, where we want to wait
-  // until the app is in the foreground again.
+  // Re-launch the process immediately if the GPU process is still enabled.
   if (gfxConfig::IsEnabled(Feature::GPU_PROCESS)) {
-#ifdef MOZ_WIDGET_ANDROID
-    if (mAppInForeground) {
-#else
-    {
-#endif
-      Unused << LaunchGPUProcess();
-    }
+    Unused << LaunchGPUProcess();
   } else {
     // If the GPU process is disabled we can reinitialize rendering immediately.
     // This will be handled in OnProcessLaunchComplete() if the GPU process is
@@ -1232,16 +1151,6 @@ already_AddRefed<CompositorSession> GPUProcessManager::CreateTopLevelCompositor(
         aUseExternalSurfaceSize, aSurfaceSize, AllocateNamespace(),
         aInnerWindowId);
   }
-
-#if defined(MOZ_WIDGET_ANDROID)
-  if (session) {
-    // Nothing to do if controller gets a nullptr
-    RefPtr<UiCompositorControllerChild> controller =
-        CreateUiCompositorController(aWidget, session->RootLayerTreeId());
-    MOZ_ASSERT(controller);
-    session->SetUiCompositorControllerChild(controller);
-  }
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
   *aRetryOut = false;
   return session.forget();

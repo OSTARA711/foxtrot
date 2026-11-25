@@ -48,7 +48,6 @@ class CompositorBridgeParentBase;
 class CompositorVsyncScheduler;
 class OMTASampler;
 class RemoteTextureTxnScheduler;
-class UiCompositorControllerParent;
 class WebRenderBridgeParentRef;
 class WebRenderImageHost;
 struct WrAnimations;
@@ -212,8 +211,8 @@ class WebRenderBridgeParent final : public PWebRenderBridgeParent,
   void FlushTransactionIdsForEpoch(
       const wr::Epoch& aEpoch, const VsyncId& aCompositeStartId,
       const TimeStamp& aCompositeStartTime, const TimeStamp& aRenderStartTime,
-      const TimeStamp& aEndTime, UiCompositorControllerParent* aUiController,
-      wr::RendererStats* aStats, nsTArray<FrameStats>& aOutputStats,
+      const TimeStamp& aEndTime, wr::RendererStats* aStats,
+      nsTArray<FrameStats>& aOutputStats,
       nsTArray<TransactionId>& aOutputTransactions);
   void NotifySceneBuiltForEpoch(const wr::Epoch& aEpoch,
                                 const TimeStamp& aEndTime);
@@ -308,13 +307,6 @@ class WebRenderBridgeParent final : public PWebRenderBridgeParent,
 
   void BeginRecording(const TimeStamp& aRecordingStart);
 
-#if defined(MOZ_WIDGET_ANDROID)
-  /**
-   * Request a screengrab for android
-   */
-  void RequestScreenPixels(UiCompositorControllerParent* aController);
-  void MaybeCaptureScreenPixels();
-#endif
   /**
    * Stop recording and the frames collected since the call to BeginRecording
    */
@@ -503,9 +495,6 @@ class WebRenderBridgeParent final : public PWebRenderBridgeParent,
 
   RefPtr<WebRenderBridgeParentRef> mWebRenderBridgeRef;
 
-#if defined(MOZ_WIDGET_ANDROID)
-  UiCompositorControllerParent* mScreenPixelsTarget;
-#endif
   uint32_t mBoolParameterBits;
   uint16_t mBlobTileSize;
   wr::RenderReasons mSkippedCompositeReasons;

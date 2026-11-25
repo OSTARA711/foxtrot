@@ -14,9 +14,6 @@
 #include "mozilla/layers/GeckoContentController.h"
 #include "mozilla/Unused.h"
 #include "nsBaseWidget.h"
-#if defined(MOZ_WIDGET_ANDROID)
-#  include "mozilla/layers/UiCompositorControllerChild.h"
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
 namespace mozilla {
 namespace layers {
@@ -40,9 +37,6 @@ RemoteCompositorSession::RemoteCompositorSession(
 RemoteCompositorSession::~RemoteCompositorSession() {
   // This should have been shutdown first.
   MOZ_ASSERT(!mCompositorBridgeChild);
-#if defined(MOZ_WIDGET_ANDROID)
-  MOZ_ASSERT(!mUiCompositorControllerChild);
-#endif  // defined(MOZ_WIDGET_ANDROID)
 }
 
 void RemoteCompositorSession::NotifySessionLost() {
@@ -88,12 +82,6 @@ void RemoteCompositorSession::Shutdown() {
   }
   mCompositorWidgetDelegate = nullptr;
   mWidget = nullptr;
-#if defined(MOZ_WIDGET_ANDROID)
-  if (mUiCompositorControllerChild) {
-    mUiCompositorControllerChild->Destroy();
-    mUiCompositorControllerChild = nullptr;
-  }
-#endif  // defined(MOZ_WIDGET_ANDROID)
   GPUProcessManager::Get()->UnregisterRemoteProcessSession(this);
 }
 

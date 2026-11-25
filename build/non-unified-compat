@@ -1,4 +1,3 @@
-accessible/android/
 accessible/aom/
 accessible/atk/
 accessible/base/
@@ -6,10 +5,8 @@ accessible/generic/
 accessible/html/
 accessible/interfaces/
 accessible/ipc/
-accessible/mac/
 accessible/other/
 accessible/tests/
-accessible/windows/
 accessible/xpcom/
 accessible/xul/
 docshell/base/

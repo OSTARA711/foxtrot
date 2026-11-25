@@ -52,7 +52,6 @@
 #include "mozilla/layers/LayersTypes.h"
 #include "mozilla/layers/OMTASampler.h"
 #include "mozilla/layers/RemoteContentController.h"
-#include "mozilla/layers/UiCompositorControllerParent.h"
 #include "mozilla/layers/WebRenderBridgeParent.h"
 #include "mozilla/layers/AsyncImagePipelineManager.h"
 #include "mozilla/webrender/WebRenderAPI.h"
@@ -215,7 +214,6 @@ CompositorBridgeParent::CompositorBridgeParent(
       mVsyncRate(aVsyncRate),
       mPaused(false),
       mHaveCompositionRecorder(false),
-      mIsForcedFirstPaint(false),
       mUseExternalSurfaceSize(aUseExternalSurfaceSize),
       mEGLSurfaceSize(aSurfaceSize),
       mOptions(aOptions),
@@ -309,12 +307,6 @@ CompositorBridgeParent::~CompositorBridgeParent() {
   // Check if WebRender/Compositor was shutdown.
   if (mWrBridge) {
     gfxCriticalNote << "CompositorBridgeParent destroyed without shutdown";
-  }
-}
-
-void CompositorBridgeParent::ForceIsFirstPaint() {
-  if (mWrBridge) {
-    mIsForcedFirstPaint = true;
   }
 }
 
@@ -1467,14 +1459,6 @@ void CompositorBridgeParent::NotifyDidRender(const VsyncId& aCompositeStartId,
 
   MOZ_RELEASE_ASSERT(mWrBridge->IsRootWebRenderBridgeParent());
 
-  RefPtr<UiCompositorControllerParent> uiController =
-      UiCompositorControllerParent::GetFromRootLayerTreeId(mRootLayerTreeID);
-
-  if (uiController && mIsForcedFirstPaint) {
-    uiController->NotifyFirstPaint();
-    mIsForcedFirstPaint = false;
-  }
-
   nsTArray<CompositionPayload> payload =
       mWrBridge->TakePendingScrollPayload(aCompositeStartId);
   if (!payload.IsEmpty()) {
@@ -1570,12 +1554,9 @@ void CompositorBridgeParent::NotifyPipelineRendered(
   nsTArray<FrameStats> stats;
   nsTArray<TransactionId> transactions;
 
-  RefPtr<UiCompositorControllerParent> uiController =
-      UiCompositorControllerParent::GetFromRootLayerTreeId(mRootLayerTreeID);
-
   wrBridge->FlushTransactionIdsForEpoch(
       aEpoch, aCompositeStartId, aCompositeStart, aRenderStart, aCompositeEnd,
-      uiController, aStats, stats, transactions);
+      aStats, stats, transactions);
   if (transactions.IsEmpty()) {
     MOZ_ASSERT(stats.IsEmpty());
     return;
