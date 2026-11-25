@@ -1535,11 +1535,6 @@ class ScrollContainerFrame : public nsContainerFrame,
   // Whether we need to schedule the scroll-driven animations.
   bool mMayScheduleScrollAnimations : 1;
 
-#ifdef MOZ_WIDGET_ANDROID
-  // True if this scrollable frame was vertically overflowed on the last reflow.
-  bool mHasVerticalOverflowForDynamicToolbar : 1;
-#endif
-
   layout::ScrollVelocityQueue mVelocityQueue;
 
   // NOTE: On mobile this value might be factoring into overflow:hidden region

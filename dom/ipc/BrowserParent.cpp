@@ -1018,14 +1018,6 @@ void BrowserParent::InitRendering() {
     Unused << SendSafeAreaInsetsChanged(widget->GetSafeAreaInsets());
   }
 
-#if defined(MOZ_WIDGET_ANDROID)
-  MOZ_ASSERT(widget);
-
-  if (GetBrowsingContext()->IsTopContent()) {
-    Unused << SendDynamicToolbarMaxHeightChanged(
-        widget->GetDynamicToolbarMaxHeight());
-  }
-#endif
 }
 
 bool BrowserParent::AttachWindowRenderer() {
@@ -1178,18 +1170,6 @@ void BrowserParent::SizeModeChanged(const nsSizeMode& aSizeMode) {
 }
 
 #ifdef MOZ_WIDGET_ANDROID
-void BrowserParent::DynamicToolbarMaxHeightChanged(ScreenIntCoord aHeight) {
-  if (!mIsDestroyed) {
-    Unused << SendDynamicToolbarMaxHeightChanged(aHeight);
-  }
-}
-
-void BrowserParent::DynamicToolbarOffsetChanged(ScreenIntCoord aOffset) {
-  if (!mIsDestroyed) {
-    Unused << SendDynamicToolbarOffsetChanged(aOffset);
-  }
-}
-
 void BrowserParent::KeyboardHeightChanged(ScreenIntCoord aHeight) {
   if (!mIsDestroyed) {
     Unused << SendKeyboardHeightChanged(aHeight);
@@ -4315,23 +4295,6 @@ mozilla::ipc::IPCResult BrowserParent::RecvRequestPointerCapture(
 mozilla::ipc::IPCResult BrowserParent::RecvReleasePointerCapture(
     const uint32_t& aPointerId) {
   PointerEventHandler::ReleasePointerCaptureRemoteTarget(aPointerId);
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult BrowserParent::RecvShowDynamicToolbar() {
-#if defined(MOZ_WIDGET_ANDROID)
-  nsCOMPtr<nsIWidget> widget = GetTopLevelWidget();
-  if (!widget) {
-    return IPC_OK();
-  }
-
-  RefPtr<nsWindow> window = nsWindow::From(widget);
-  if (!window) {
-    return IPC_OK();
-  }
-
-  window->ShowDynamicToolbar();
-#endif  // defined(MOZ_WIDGET_ANDROID)
   return IPC_OK();
 }
 

@@ -279,7 +279,6 @@ BrowserChild::BrowserChild(ContentChild* aManager, const TabId& aTabId,
       mMaxTouchPoints(0),
       mLayersId{0},
       mEffectsInfo{EffectsInfo::FullyHidden()},
-      mDynamicToolbarMaxHeight(0),
       mKeyboardHeight(0),
       mUniqueId(aTabId),
       mDidFakeShow(false),
@@ -1207,38 +1206,6 @@ mozilla::ipc::IPCResult BrowserChild::RecvUpdateRemoteStyle(
     document->AsImageDocument()->UpdateRemoteStyle(aImageRendering);
   }
 
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult BrowserChild::RecvDynamicToolbarMaxHeightChanged(
-    const ScreenIntCoord& aHeight) {
-#if defined(MOZ_WIDGET_ANDROID)
-  mDynamicToolbarMaxHeight = aHeight;
-
-  RefPtr<Document> document = GetTopLevelDocument();
-  if (!document) {
-    return IPC_OK();
-  }
-
-  if (RefPtr<nsPresContext> presContext = document->GetPresContext()) {
-    presContext->SetDynamicToolbarMaxHeight(aHeight);
-  }
-#endif
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult BrowserChild::RecvDynamicToolbarOffsetChanged(
-    const ScreenIntCoord& aOffset) {
-#if defined(MOZ_WIDGET_ANDROID)
-  RefPtr<Document> document = GetTopLevelDocument();
-  if (!document) {
-    return IPC_OK();
-  }
-
-  if (nsPresContext* presContext = document->GetPresContext()) {
-    presContext->UpdateDynamicToolbarOffset(aOffset);
-  }
-#endif
   return IPC_OK();
 }
 

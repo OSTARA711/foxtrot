@@ -1367,21 +1367,6 @@ class LayerViewSupport final
     gkWindow->mCompositorBridgeChild->SendNotifyMemoryPressure();
   }
 
-  void SetDynamicToolbarMaxHeight(int32_t aHeight) {
-    MOZ_ASSERT(NS_IsMainThread());
-    auto acc = mWindow.Access();
-    if (!acc) {
-      return;  // Already shut down.
-    }
-
-    nsWindow* gkWindow = acc->GetNsWindow();
-    if (!gkWindow) {
-      return;
-    }
-
-    gkWindow->UpdateDynamicToolbarMaxHeight(ScreenIntCoord(aHeight));
-  }
-
   void OnPipModeChanged(bool aPipMode) {
     MOZ_ASSERT(NS_IsMainThread());
     auto win(mWindow.Access());
@@ -1617,13 +1602,6 @@ class LayerViewSupport final
   }
 
   void SetFixedBottomOffset(int32_t aOffset) {
-    if (auto acc{mWindow.Access()}) {
-      nsWindow* gkWindow = acc->GetNsWindow();
-      if (gkWindow) {
-        gkWindow->UpdateDynamicToolbarOffset(ScreenIntCoord(aOffset));
-      }
-    }
-
     if (RefPtr<nsThread> uiThread = GetAndroidUiThread()) {
       uiThread->Dispatch(NS_NewRunnableFunction(
           "LayerViewSupport::SetFixedBottomOffset", [this, offset = aOffset] {
@@ -2016,15 +1994,6 @@ auto GeckoViewSupport::OnLoadRequest(mozilla::jni::String::Param aUri,
   }
   return window->OnLoadRequest(aUri, aWindowType, aFlags, aTriggeringUri,
                                aHasUserGesture, aIsTopLevel);
-}
-
-void GeckoViewSupport::OnShowDynamicToolbar() const {
-  GeckoSession::Window::LocalRef window(mGeckoViewWindow);
-  if (!window) {
-    return;
-  }
-
-  window->OnShowDynamicToolbar();
 }
 
 void GeckoViewSupport::OnHideDynamicToolbar() const {
@@ -2716,15 +2685,6 @@ void nsWindow::NotifyCompositorSessionLost(
   RedrawAll();
 }
 
-void nsWindow::ShowDynamicToolbar() {
-  auto acc(mGeckoViewSupport.Access());
-  if (!acc) {
-    return;
-  }
-
-  acc->OnShowDynamicToolbar();
-}
-
 void nsWindow::OnDragEvent(int32_t aAction, float aX, float aY,
                            jni::Object::Param aDropData,
                            const mozilla::layers::APZEventResult& aApzResult,
@@ -3298,32 +3258,6 @@ void nsWindow::RecvScreenPixels(Shmem&& aMem, const ScreenIntSize& aSize,
   if (::mozilla::jni::NativeWeakPtr<LayerViewSupport>::Accessor lvs{
           mLayerViewSupport.Access()}) {
     lvs->RecvScreenPixels(std::move(aMem), aSize, aNeedsYFlip);
-  }
-}
-
-void nsWindow::UpdateDynamicToolbarMaxHeight(ScreenIntCoord aHeight) {
-  if (mDynamicToolbarMaxHeight == aHeight) {
-    return;
-  }
-
-  mDynamicToolbarMaxHeight = aHeight;
-
-  if (mWidgetListener) {
-    mWidgetListener->DynamicToolbarMaxHeightChanged(aHeight);
-  }
-
-  if (mAttachedWidgetListener) {
-    mAttachedWidgetListener->DynamicToolbarMaxHeightChanged(aHeight);
-  }
-}
-
-void nsWindow::UpdateDynamicToolbarOffset(ScreenIntCoord aOffset) {
-  if (mWidgetListener) {
-    mWidgetListener->DynamicToolbarOffsetChanged(aOffset);
-  }
-
-  if (mAttachedWidgetListener) {
-    mAttachedWidgetListener->DynamicToolbarOffsetChanged(aOffset);
   }
 }
 

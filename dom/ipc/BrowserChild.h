@@ -274,13 +274,6 @@ class BrowserChild final : public nsMessageManagerScriptExecutor,
       const mozilla::Maybe<mozilla::gfx::Matrix4x4>& aMatrix,
       const mozilla::ScreenRect& aTopLevelViewportVisibleRectInBrowserCoords);
 
-  MOZ_CAN_RUN_SCRIPT_BOUNDARY
-  mozilla::ipc::IPCResult RecvDynamicToolbarMaxHeightChanged(
-      const mozilla::ScreenIntCoord& aHeight);
-
-  mozilla::ipc::IPCResult RecvDynamicToolbarOffsetChanged(
-      const mozilla::ScreenIntCoord& aOffset);
-
   mozilla::ipc::IPCResult RecvKeyboardHeightChanged(
       const mozilla::ScreenIntCoord& aHeight);
 
@@ -557,9 +550,6 @@ class BrowserChild final : public nsMessageManagerScriptExecutor,
 
   LayoutDeviceIntPoint GetClientOffset() const { return mClientOffset; }
   LayoutDeviceIntPoint GetChromeOffset() const { return mChromeOffset; };
-  ScreenIntCoord GetDynamicToolbarMaxHeight() const {
-    return mDynamicToolbarMaxHeight;
-  };
   mozilla::ScreenIntCoord GetKeyboardHeight() const { return mKeyboardHeight; }
 
   bool InAndroidPipMode() const { return mInAndroidPipMode; }
@@ -868,7 +858,6 @@ class BrowserChild final : public nsMessageManagerScriptExecutor,
   // Position of tab, relative to parent widget (typically the window)
   // NOTE: This value is valuable only for the top level browser.
   LayoutDeviceIntPoint mChromeOffset;
-  ScreenIntCoord mDynamicToolbarMaxHeight;
   // The software keyboard height.
   ScreenIntCoord mKeyboardHeight;
   TabId mUniqueId;

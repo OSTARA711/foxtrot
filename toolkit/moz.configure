@@ -157,7 +157,7 @@ set_config("MOZ_CONFIGURE_OPTIONS", all_configure_options)
 
 @depends(target)
 def fold_libs(target):
-    return target.os in ("WINNT", "OSX", "iOS", "Android")
+    return target.os in ("WINNT", "OSX", "Android")
 
 
 set_config("MOZ_FOLD_LIBS", fold_libs)
@@ -529,8 +529,6 @@ def toolkit_choices(target):
         return ("cairo-windows",)
     elif target.os == "OSX":
         return ("cairo-cocoa",)
-    elif target.os == "iOS":
-        return ("cairo-uikit",)
     elif target.os == "Android":
         return ("cairo-android",)
     else:
@@ -813,7 +811,7 @@ set_define("MOZ_HAVE_FREETYPE2", depends_if(freetype2_info)(lambda _: True))
 # ==============================================================
 @depends(toolkit)
 def applemedia(toolkit):
-    if toolkit in ("cocoa", "uikit"):
+    if toolkit == "cocoa":
         return True
 
 
@@ -1193,7 +1191,7 @@ set_config("MOZ_APP_SYSTEM_HEADERS", app_system_headers)
 # ==============================================================
 @depends(target)
 def printing_default(target):
-    return target.os != "iOS"
+    return True
 
 
 option(

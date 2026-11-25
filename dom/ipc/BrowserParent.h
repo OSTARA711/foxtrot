@@ -478,8 +478,6 @@ class BrowserParent final : public PBrowserParent,
                        nsTArray<uint32_t>& aCharCodes);
 
 #ifdef MOZ_WIDGET_ANDROID
-  void DynamicToolbarMaxHeightChanged(ScreenIntCoord aHeight);
-  void DynamicToolbarOffsetChanged(ScreenIntCoord aOffset);
   void KeyboardHeightChanged(ScreenIntCoord aHeight);
   void AndroidPipModeChanged(bool);
 #endif
@@ -766,7 +764,6 @@ class BrowserParent final : public PBrowserParent,
       const uint32_t& aPointerId, RequestPointerCaptureResolver&& aResolve);
   mozilla::ipc::IPCResult RecvReleasePointerCapture(const uint32_t& aPointerId);
 
-  mozilla::ipc::IPCResult RecvShowDynamicToolbar();
 
   void GetIPCTransferableData(nsIDragSession* aSession,
                               nsTArray<IPCTransferableData>& aIPCTransferables);

@@ -73,7 +73,6 @@ class nsWindow final : public nsBaseWidget {
 
  private:
   nsCOMPtr<nsIUserIdleServiceInternal> mIdleService;
-  mozilla::ScreenIntCoord mDynamicToolbarMaxHeight{0};
   mozilla::LayoutDeviceIntMargin mSafeAreaInsets;
   mozilla::widget::PlatformCompositorWidgetDelegate* mCompositorWidgetDelegate =
       nullptr;
@@ -136,7 +135,6 @@ class nsWindow final : public nsBaseWidget {
 
   void PassExternalResponse(mozilla::java::WebResponse::Param aResponse);
 
-  void ShowDynamicToolbar();
 
   MOZ_CAN_RUN_SCRIPT_BOUNDARY void OnDragEvent(
       int32_t aAction, float aX, float aY,
@@ -245,13 +243,6 @@ class nsWindow final : public nsBaseWidget {
       const mozilla::layers::CompositorScrollUpdate& aUpdate) override;
   void RecvScreenPixels(mozilla::ipc::Shmem&& aMem, const ScreenIntSize& aSize,
                         bool aNeedsYFlip) override;
-  void UpdateDynamicToolbarMaxHeight(mozilla::ScreenIntCoord aHeight) override;
-  mozilla::ScreenIntCoord GetDynamicToolbarMaxHeight() const override {
-    return mDynamicToolbarMaxHeight;
-  }
-
-  void UpdateDynamicToolbarOffset(mozilla::ScreenIntCoord aOffset);
-
   mozilla::LayoutDeviceIntMargin GetSafeAreaInsets() const override;
   void UpdateSafeAreaInsets(const mozilla::LayoutDeviceIntMargin&);
 

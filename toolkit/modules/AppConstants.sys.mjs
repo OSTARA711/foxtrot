@@ -75,8 +75,6 @@ export var AppConstants = Object.freeze({
   "win",
 #elif XP_MACOSX
   "macosx",
-#elif XP_IOS
-  "ios",
 #elif MOZ_WIDGET_ANDROID
   "android",
 #elif XP_LINUX

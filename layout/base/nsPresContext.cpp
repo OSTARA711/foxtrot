@@ -702,18 +702,6 @@ nsresult nsPresContext::Init(nsDeviceContext* aDeviceContext) {
 
   mEventManager->SetPresContext(this);
 
-#if defined(MOZ_WIDGET_ANDROID)
-  if (IsRootContentDocumentCrossProcess()) {
-    if (BrowserChild* browserChild = BrowserChild::GetFrom(GetDocShell())) {
-      if (MOZ_LIKELY(!Preferences::HasUserValue(
-              "layout.dynamic-toolbar-max-height"))) {
-        mDynamicToolbarMaxHeight = browserChild->GetDynamicToolbarMaxHeight();
-        mDynamicToolbarHeight = mDynamicToolbarMaxHeight;
-      }
-    }
-  }
-#endif
-
 #ifdef DEBUG
   mInitialized = true;
 #endif

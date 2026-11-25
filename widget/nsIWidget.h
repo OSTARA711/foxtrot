@@ -2031,10 +2031,6 @@ class nsIWidget : public nsISupports {
                                 const ScreenIntSize& aSize,
                                 bool aNeedsYFlip) = 0;
 
-  virtual void UpdateDynamicToolbarMaxHeight(mozilla::ScreenIntCoord aHeight) {}
-  virtual mozilla::ScreenIntCoord GetDynamicToolbarMaxHeight() const {
-    return 0;
-  }
 #endif
 
   static already_AddRefed<nsIBidiKeyboard> CreateBidiKeyboard();

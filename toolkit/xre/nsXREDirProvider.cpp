@@ -77,9 +77,6 @@
 #ifdef XP_UNIX
 #  include <ctype.h>
 #endif
-#ifdef XP_IOS
-#  include "UIKitDirProvider.h"
-#endif
 
 #if defined(XP_MACOSX)
 #  define APP_REGISTRY_NAME "Application Registry"
@@ -1058,15 +1055,6 @@ nsresult nsXREDirProvider::GetUserDataDirectoryHome(nsIFile** aFile,
   nsCOMPtr<nsILocalFileMac> dirFileMac;
   MOZ_TRY(NS_NewLocalFileWithFSRef(&fsRef, getter_AddRefs(dirFileMac)));
   localDir = dirFileMac.forget();
-#elif defined(XP_IOS)
-  nsAutoCString userDir;
-  nsresult rv;
-  if (GetUIKitDirectory(aLocal, userDir)) {
-    rv = NS_NewNativeLocalFile(userDir, getter_AddRefs(localDir));
-  } else {
-    rv = NS_ERROR_FAILURE;
-  }
-  NS_ENSURE_SUCCESS(rv, rv);
 #elif defined(XP_WIN)
   nsresult rv;
   nsString path;

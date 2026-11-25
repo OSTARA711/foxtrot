@@ -33,10 +33,6 @@
 #include "nsXULAppAPI.h"  // for GeckoProcessType
 #include "nsString.h"
 
-#if defined(XP_IOS)
-#  include "mozilla/ipc/ExtensionKitUtils.h"
-#endif
-
 #if defined(XP_WIN) && defined(MOZ_SANDBOX)
 #  include "sandboxBroker.h"
 #endif
@@ -268,12 +264,6 @@ class GeckoChildProcessHost : public SupportsWeakPtr,
   ProcessHandle mChildProcessHandle MOZ_GUARDED_BY(mHandleLock);
 #if defined(XP_DARWIN)
   task_t mChildTask MOZ_GUARDED_BY(mHandleLock);
-#endif
-#if defined(MOZ_WIDGET_UIKIT)
-  Maybe<ExtensionKitProcess> mExtensionKitProcess MOZ_GUARDED_BY(mHandleLock);
-  DarwinObjectPtr<xpc_connection_t> mXPCConnection MOZ_GUARDED_BY(mHandleLock);
-  UniqueBEProcessCapabilityGrant mForegroundCapabilityGrant
-      MOZ_GUARDED_BY(mHandleLock);
 #endif
   RefPtr<ProcessHandlePromise> mHandlePromise;
 

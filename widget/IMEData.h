@@ -426,25 +426,17 @@ struct InputContext final {
 
   bool IsInputAttributeChanged(const InputContext& aOldContext) const {
     return mIMEState.mEnabled != aOldContext.mIMEState.mEnabled ||
-#if defined(MOZ_WIDGET_GTK) || defined(XP_WIN) || \
-    defined(XP_IOS)
-           // input type and inputmode are supported by Windows IME API, GTK
-           // IME API and iOS API.
+#if defined(MOZ_WIDGET_GTK) || defined(XP_WIN)
+           // input type and inputmode are supported by Windows and GTK IME APIs.
            mHTMLInputType != aOldContext.mHTMLInputType ||
            mHTMLInputMode != aOldContext.mHTMLInputMode ||
 #endif
-#if defined(MOZ_WIDGET_GTK) || defined(XP_IOS)
-           // autocapitalize is supported by GTK IME API and
-           // iOS API
+#if defined(MOZ_WIDGET_GTK)
+           // autocapitalize is supported by the GTK IME API.
            mAutocapitalize != aOldContext.mAutocapitalize ||
 #endif
-#if defined(XP_IOS)
-           // enterkeyhint is only supported by iOS API.
-           mActionHint != aOldContext.mActionHint ||
-#endif
 #if defined(XP_DARWIN)
-           // autocorrect is only supported by macOS text
-           // substitution and iOS API.
+           // autocorrect is supported by macOS text substitution.
            mAutocorrect != aOldContext.mAutocorrect ||
 #endif
            false;

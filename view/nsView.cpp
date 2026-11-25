@@ -834,36 +834,6 @@ bool nsView::WindowResized(nsIWidget* aWidget, int32_t aWidth,
 }
 
 #ifdef MOZ_WIDGET_ANDROID
-void nsView::DynamicToolbarMaxHeightChanged(ScreenIntCoord aHeight) {
-  MOZ_ASSERT(XRE_IsParentProcess(),
-             "Should be only called for the browser parent process");
-  MOZ_ASSERT(this == mViewManager->GetRootView(),
-             "Should be called for the root view");
-
-  CallOnAllRemoteChildren(
-      [aHeight](dom::BrowserParent* aBrowserParent) -> CallState {
-        aBrowserParent->DynamicToolbarMaxHeightChanged(aHeight);
-        return CallState::Continue;
-      });
-}
-
-void nsView::DynamicToolbarOffsetChanged(ScreenIntCoord aOffset) {
-  MOZ_ASSERT(XRE_IsParentProcess(),
-             "Should be only called for the browser parent process");
-  MOZ_ASSERT(this == mViewManager->GetRootView(),
-             "Should be called for the root view");
-  CallOnAllRemoteChildren(
-      [aOffset](dom::BrowserParent* aBrowserParent) -> CallState {
-        // Skip background tabs.
-        if (!aBrowserParent->GetDocShellIsActive()) {
-          return CallState::Continue;
-        }
-
-        aBrowserParent->DynamicToolbarOffsetChanged(aOffset);
-        return CallState::Stop;
-      });
-}
-
 void nsView::KeyboardHeightChanged(ScreenIntCoord aHeight) {
   MOZ_ASSERT(XRE_IsParentProcess(),
              "Should be only called for the browser parent process");

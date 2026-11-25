@@ -228,7 +228,7 @@ static CommandLineArg<bool> sNotForBrowser{"-notForBrowser", "notforbrowser"};
 static CommandLineArg<const char*> sPluginPath{"-pluginPath", "pluginpath"};
 static CommandLineArg<bool> sPluginNativeEvent{"-pluginNativeEvent",
                                                "pluginnativeevent"};
-#if defined(XP_WIN) || defined(XP_MACOSX) || defined(XP_IOS)
+#if defined(XP_WIN) || defined(XP_MACOSX)
 static CommandLineArg<const char*> sCrashReporter{"-crashReporter",
                                                   "crashreporter"};
 #else

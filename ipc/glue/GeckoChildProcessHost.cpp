@@ -127,11 +127,6 @@ struct LaunchResults {
 #ifdef XP_DARWIN
   task_t mChildTask = MACH_PORT_NULL;
 #endif
-#ifdef XP_IOS
-  Maybe<ExtensionKitProcess> mExtensionKitProcess;
-  DarwinObjectPtr<xpc_connection_t> mXPCConnection;
-  UniqueBEProcessCapabilityGrant mForegroundCapabilityGrant;
-#endif
 #if defined(XP_WIN) && defined(MOZ_SANDBOX)
   UniquePtr<SandboxBroker> mSandboxBroker;
 #endif
@@ -340,19 +335,6 @@ class LinuxProcessLauncher : public PosixProcessLauncher {
   virtual Result<Ok, LaunchError> DoSetup() override;
 };
 typedef LinuxProcessLauncher ProcessLauncher;
-#  elif defined(MOZ_WIDGET_UIKIT)
-class IosProcessLauncher : public PosixProcessLauncher {
- public:
-  IosProcessLauncher(GeckoChildProcessHost* aHost,
-                     geckoargs::ChildProcessArgs&& aExtraOpts)
-      : PosixProcessLauncher(aHost, std::move(aExtraOpts)) {}
-
- protected:
-  virtual RefPtr<ProcessHandlePromise> DoLaunch() override;
-
-  DarwinObjectPtr<xpc_object_t> mBootstrapMessage;
-};
-typedef IosProcessLauncher ProcessLauncher;
 #  else
 #    error "Unknown platform"
 #  endif
@@ -425,17 +407,6 @@ GeckoChildProcessHost::~GeckoChildProcessHost() {
 #if defined(XP_DARWIN)
     if (mChildTask != MACH_PORT_NULL) {
       mach_port_deallocate(mach_task_self(), mChildTask);
-    }
-#endif
-#if defined(XP_IOS)
-    if (mForegroundCapabilityGrant) {
-      mForegroundCapabilityGrant.reset();
-    }
-    if (mExtensionKitProcess) {
-      mExtensionKitProcess->Invalidate();
-    }
-    if (mXPCConnection) {
-      xpc_connection_cancel(mXPCConnection.get());
     }
 #endif
 
@@ -767,12 +738,6 @@ bool GeckoChildProcessHost::AsyncLaunch(
 
 #ifdef XP_DARWIN
                     this->mChildTask = aResults.mChildTask;
-#endif
-#ifdef XP_IOS
-                    this->mExtensionKitProcess = aResults.mExtensionKitProcess;
-                    this->mXPCConnection = aResults.mXPCConnection;
-                    this->mForegroundCapabilityGrant =
-                        std::move(aResults.mForegroundCapabilityGrant);
 #endif
 
                     if (mNodeChannel) {
@@ -1125,13 +1090,13 @@ Result<Ok, LaunchError> BaseProcessLauncher::DoSetup() {
 #if defined(MOZ_WIDGET_COCOA) || defined(XP_WIN)
     geckoargs::sCrashReporter.Put(CrashReporter::GetChildNotificationPipe(),
                                   mChildArgs);
-#elif defined(XP_UNIX) && !defined(XP_IOS)
+#elif defined(XP_UNIX)
     UniqueFileHandle childCrashFd = CrashReporter::GetChildNotificationPipe();
     if (!childCrashFd) {
       return Err(LaunchError("DuplicateFileHandle failed"));
     }
     geckoargs::sCrashReporter.Put(std::move(childCrashFd), mChildArgs);
-#endif  // XP_UNIX && !XP_IOS
+#endif  // XP_UNIX
 
     UniqueFileHandle crashHelperClientFd =
         CrashReporter::RegisterChildIPCChannel();
@@ -1366,152 +1331,6 @@ RefPtr<ProcessHandlePromise> PosixProcessLauncher::DoLaunch() {
 }
 #endif  // XP_UNIX
 
-#ifdef XP_IOS
-RefPtr<ProcessHandlePromise> IosProcessLauncher::DoLaunch() {
-  ExtensionKitProcess::Kind kind = ExtensionKitProcess::Kind::WebContent;
-  if (mProcessType == GeckoProcessType_GPU) {
-    kind = ExtensionKitProcess::Kind::Rendering;
-  } else if (mProcessType == GeckoProcessType_Socket) {
-    kind = ExtensionKitProcess::Kind::Networking;
-  }
-
-  DarwinObjectPtr<xpc_object_t> bootstrapMessage =
-      AdoptDarwinObject(xpc_dictionary_create_empty());
-  xpc_dictionary_set_string(bootstrapMessage.get(), "message-name",
-                            "bootstrap");
-
-  DarwinObjectPtr<xpc_object_t> environDict =
-      AdoptDarwinObject(xpc_dictionary_create_empty());
-  for (auto& [envKey, envValue] : mLaunchOptions->env_map) {
-    xpc_dictionary_set_string(environDict.get(), envKey.c_str(),
-                              envValue.c_str());
-  }
-  xpc_dictionary_set_value(bootstrapMessage.get(), "environ",
-                           environDict.get());
-
-  // Setup stdout and stderr to inherit.
-  xpc_dictionary_set_fd(bootstrapMessage.get(), "stdout", STDOUT_FILENO);
-  xpc_dictionary_set_fd(bootstrapMessage.get(), "stderr", STDERR_FILENO);
-
-  DarwinObjectPtr<xpc_object_t> argsArray =
-      AdoptDarwinObject(xpc_array_create_empty());
-  for (auto& argv : mChildArgs.mArgs) {
-    xpc_array_set_string(argsArray.get(), XPC_ARRAY_APPEND, argv.c_str());
-  }
-  MOZ_ASSERT(xpc_array_get_count(argsArray.get()) == mChildArgs.mArgs.size());
-  xpc_dictionary_set_value(bootstrapMessage.get(), "argv", argsArray.get());
-
-  DarwinObjectPtr<xpc_object_t> fdsArray =
-      AdoptDarwinObject(xpc_array_create_empty());
-  for (auto& file : mChildArgs.mFiles) {
-    xpc_array_set_fd(fdsArray.get(), XPC_ARRAY_APPEND, file.get());
-  }
-  MOZ_ASSERT(xpc_array_get_count(fdsArray.get()) == mChildArgs.mFiles.size());
-  xpc_dictionary_set_value(bootstrapMessage.get(), "fds", fdsArray.get());
-
-  DarwinObjectPtr<xpc_object_t> sendRightsArray =
-      AdoptDarwinObject(xpc_array_create_empty());
-  for (auto& sendRight : mChildArgs.mSendRights) {
-    // NOTE: As iOS doesn't expose an xpc_array_set_mach_send function, send
-    // rights are wrapped with single-key dictionaries.
-    DarwinObjectPtr<xpc_object_t> sendRightWrapper =
-        AdoptDarwinObject(xpc_dictionary_create_empty());
-    xpc_dictionary_set_mach_send(sendRightWrapper.get(), "port",
-                                 sendRight.get());
-    xpc_array_set_value(sendRightsArray.get(), XPC_ARRAY_APPEND,
-                        sendRightWrapper.get());
-  }
-  MOZ_ASSERT(xpc_array_get_count(sendRightsArray.get()) ==
-             mChildArgs.mSendRights.size());
-  xpc_dictionary_set_value(bootstrapMessage.get(), "sendRights",
-                           sendRightsArray.get());
-
-  auto promise = MakeRefPtr<ProcessHandlePromise::Private>(__func__);
-  ExtensionKitProcess::StartProcess(kind, [self = RefPtr{this}, promise,
-                                           bootstrapMessage =
-                                               std::move(bootstrapMessage)](
-                                              Result<ExtensionKitProcess,
-                                                     LaunchError>&& result) {
-    if (result.isErr()) {
-      CHROMIUM_LOG(ERROR) << "ExtensionKitProcess::StartProcess failed";
-      promise->Reject(result.unwrapErr(), __func__);
-      return;
-    }
-
-    auto process = result.unwrap();
-    self->mResults.mForegroundCapabilityGrant =
-        process.GrantForegroundCapability();
-    self->mResults.mXPCConnection = process.MakeLibXPCConnection();
-    self->mResults.mExtensionKitProcess = Some(std::move(process));
-
-    // We don't actually use the event handler for anything other than
-    // watching for errors. Once the promise is resolved, this becomes a
-    // no-op.
-    xpc_connection_set_event_handler(self->mResults.mXPCConnection.get(), ^(
-                                         xpc_object_t event) {
-      if (!event || xpc_get_type(event) == XPC_TYPE_ERROR) {
-        CHROMIUM_LOG(WARNING) << "XPC connection received encountered an error";
-        promise->Reject(LaunchError("xpc_connection_event_handler"), __func__);
-      }
-    });
-    xpc_connection_resume(self->mResults.mXPCConnection.get());
-
-    // Send our bootstrap message to the content and wait for it to reply with
-    // the task port before resolving.
-    // FIXME: Should we have a time-out for if the child process doesn't respond
-    // in time? The main thread may be blocked while we're starting this
-    // process.
-    xpc_connection_send_message_with_reply(
-        self->mResults.mXPCConnection.get(), bootstrapMessage.get(), nullptr,
-        ^(xpc_object_t reply) {
-          if (xpc_get_type(reply) == XPC_TYPE_ERROR) {
-            CHROMIUM_LOG(ERROR)
-                << "Got error sending XPC bootstrap message to child";
-            promise->Reject(
-                LaunchError("xpc_connection_send_message_with_reply error"),
-                __func__);
-            return;
-          }
-
-          if (xpc_get_type(reply) != XPC_TYPE_DICTIONARY) {
-            CHROMIUM_LOG(ERROR)
-                << "Unexpected reply type for bootstrap message from child";
-            promise->Reject(
-                LaunchError(
-                    "xpc_connection_send_message_with_reply non-dictionary"),
-                __func__);
-            return;
-          }
-
-          // FIXME: We have to trust the child to tell us its pid & mach task.
-          // WebKit uses `xpc_connection_get_pid` to get the pid, however this
-          // is marked as unavailable on iOS.
-          //
-          // Given how the process is started, however, validating this
-          // information it sends us this early during startup may be
-          // unnecessary.
-          self->mResults.mChildTask =
-              xpc_dictionary_copy_mach_send(reply, "task");
-          pid_t pid =
-              static_cast<pid_t>(xpc_dictionary_get_int64(reply, "pid"));
-          CHROMIUM_LOG(INFO) << "ExtensionKit process started, task: "
-                             << self->mResults.mChildTask << ", pid: " << pid;
-
-          pid_t taskPid;
-          kern_return_t kr = pid_for_task(self->mResults.mChildTask, &taskPid);
-          if (kr != KERN_SUCCESS || pid != taskPid) {
-            CHROMIUM_LOG(ERROR) << "Could not validate child task matches pid";
-            promise->Reject(LaunchError("pid_for_task mismatch"), __func__);
-            return;
-          }
-
-          promise->Resolve(pid, __func__);
-        });
-  });
-
-  return promise;
-}
-#endif
 
 #ifdef XP_MACOSX
 Result<Ok, LaunchError> MacProcessLauncher::DoFinishLaunch() {

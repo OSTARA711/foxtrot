@@ -7,11 +7,9 @@
 
 # Updater
 # ==============================================================
-@depends(build_project, target)
-def updater_default(build_project, target):
-    if build_project == "tools/update-programs":
-        return True
-    return target.os != "iOS"
+@depends(build_project)
+def updater_default(build_project):
+    return True
 
 
 option(

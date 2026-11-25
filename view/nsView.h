@@ -391,8 +391,6 @@ class nsView final : public nsIWidgetListener {
   bool WindowResized(nsIWidget* aWidget, int32_t aWidth,
                      int32_t aHeight) override;
 #ifdef MOZ_WIDGET_ANDROID
-  void DynamicToolbarMaxHeightChanged(mozilla::ScreenIntCoord aHeight) override;
-  void DynamicToolbarOffsetChanged(mozilla::ScreenIntCoord aOffset) override;
   void KeyboardHeightChanged(mozilla::ScreenIntCoord aHeight) override;
   void AndroidPipModeChanged(bool) override;
 #endif

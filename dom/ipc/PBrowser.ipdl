@@ -658,7 +658,6 @@ parent:
                              ScrollAxis aHorizontal, ScrollFlags aScrollFlags,
                              int32_t aAppUnitsPerDevPixel);
 
-    async ShowDynamicToolbar();
 
 child:
     /**
@@ -699,9 +698,7 @@ child:
 
     async UpdateRemoteStyle(StyleImageRendering aImageRendering);
 
-    async DynamicToolbarMaxHeightChanged(ScreenIntCoord height);
 
-    async DynamicToolbarOffsetChanged(ScreenIntCoord offset);
 
     async KeyboardHeightChanged(ScreenIntCoord height);
 

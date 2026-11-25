@@ -55,7 +55,7 @@ XPCOM_MANIFESTS += [
     "components.conf",
 ]
 
-if toolkit in ("cocoa", "gtk", "uikit", "windows"):
+if toolkit in ("cocoa", "gtk", "windows"):
     DIRS += [toolkit]
 
 if toolkit == "cocoa":
@@ -90,10 +90,6 @@ elif toolkit == "windows":
         "nsITaskbarWindowPreview.idl",
         "nsIWindowsUIUtils.idl",
         "nsIWinTaskbar.idl",
-    ]
-elif toolkit == "uikit":
-    XPIDL_SOURCES += [
-        "nsIGeckoViewBridge.idl",
     ]
 
 if CONFIG["NS_PRINTING"]:
@@ -328,7 +324,7 @@ EXPORTS.ipc = [
 if CONFIG["MOZ_X11"] or CONFIG["MOZ_WAYLAND"]:
     DIRS += ["x11"]
 
-if toolkit in {"gtk", "cocoa", "windows", "uikit"}:
+if toolkit in {"gtk", "cocoa", "windows"}:
     UNIFIED_SOURCES += [
         "nsBaseFilePicker.cpp",
     ]
@@ -338,7 +334,7 @@ if toolkit in {"gtk", "cocoa", "windows"}:
         "nsBaseColorPicker.cpp",
     ]
 
-if toolkit in ("gtk", "windows", "cocoa", "uikit"):
+if toolkit in ("gtk", "windows", "cocoa"):
     UNIFIED_SOURCES += [
         "nsNativeTheme.cpp",
     ]

@@ -1110,20 +1110,6 @@ bool PresShell::InRDMPane() {
   return false;
 }
 
-#if defined(MOZ_WIDGET_ANDROID)
-void PresShell::MaybeNotifyShowDynamicToolbar() {
-  const DynamicToolbarState dynToolbarState = GetDynamicToolbarState();
-  if ((dynToolbarState == DynamicToolbarState::Collapsed ||
-       dynToolbarState == DynamicToolbarState::InTransition)) {
-    MOZ_ASSERT(mPresContext &&
-               mPresContext->IsRootContentDocumentCrossProcess());
-    if (BrowserChild* browserChild = BrowserChild::GetFrom(this)) {
-      browserChild->SendShowDynamicToolbar();
-    }
-  }
-}
-#endif  // defined(MOZ_WIDGET_ANDROID)
-
 void PresShell::Destroy() {
   // Do not add code before this line please!
   if (mHaveShutDown) {
@@ -11946,13 +11932,6 @@ void PresShell::SetIsActive(bool aIsActive) {
   UpdateImageLockingState();
 
   if (activityChanged) {
-#if defined(MOZ_WIDGET_ANDROID)
-    if (!aIsActive && presContext &&
-        presContext->IsRootContentDocumentCrossProcess()) {
-      // Reset the dynamic toolbar offset state.
-      presContext->UpdateDynamicToolbarOffset(0);
-    }
-#endif
   }
 
   if (aIsActive) {

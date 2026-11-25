@@ -259,7 +259,7 @@ bool CreateMinidumpsAndPair(ProcessHandle aTargetPid,
                             AnnotationTable& aTargetAnnotations,
                             nsIFile** aTargetDumpOut);
 
-#if defined(XP_WIN) || defined(XP_MACOSX) || defined(XP_IOS)
+#if defined(XP_WIN) || defined(XP_MACOSX)
 using CrashPipeType = const char*;
 #else
 using CrashPipeType = mozilla::UniqueFileHandle;

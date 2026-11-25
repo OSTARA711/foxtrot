@@ -33,8 +33,6 @@
 #    include "DarwinFileUtils.h"
 #    if defined(MOZ_WIDGET_COCOA)
 #      include "CFTypeRefPtr.h"
-#    elif defined(MOZ_WIDGET_UIKIT)
-#      include "mozilla/UIKitDirProvider.h"
 #    endif
 #  endif
 #  if defined(MOZ_WIDGET_GTK)

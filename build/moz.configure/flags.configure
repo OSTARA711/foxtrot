@@ -531,10 +531,6 @@ def add_cmflags(compilation_flags, toolkit):
 
     compilation_flags.cmflags.extend(cmflags)
     compilation_flags.cmmflags.extend(cmmflags)
-    if toolkit == "uikit":
-        uiflags = ["-fobjc-abi-version=2", "-fobjc-legacy-dispatch"]
-        compilation_flags.cmflags.extend(uiflags)
-        compilation_flags.cmmflags.extend(uiflags)
 
 
 set_config("OS_COMPILE_CMFLAGS", compilation_flags.cmflags)

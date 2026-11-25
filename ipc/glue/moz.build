@@ -148,14 +148,6 @@ if CONFIG["OS_ARCH"] != "WINNT":
         "FileDescriptorShuffle.cpp",
     ]
 
-if CONFIG["TARGET_OS"] == "iOS":
-    EXPORTS.mozilla.ipc += [
-        "ExtensionKitUtils.h",
-    ]
-    UNIFIED_SOURCES += [
-        "ExtensionKitUtils.mm",
-    ]
-
 EXPORTS.ipc += [
     "EnumSerializer.h",
     "IPCMessageUtils.h",
