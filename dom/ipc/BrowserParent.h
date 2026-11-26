@@ -477,11 +477,6 @@ class BrowserParent final : public PBrowserParent,
   void HandleAccessKey(const WidgetKeyboardEvent& aEvent,
                        nsTArray<uint32_t>& aCharCodes);
 
-#ifdef MOZ_WIDGET_ANDROID
-  void KeyboardHeightChanged(ScreenIntCoord aHeight);
-  void AndroidPipModeChanged(bool);
-#endif
-
   void Activate(uint64_t aActionId);
 
   void Deactivate(bool aWindowLowering, uint64_t aActionId);

@@ -274,11 +274,6 @@ class BrowserChild final : public nsMessageManagerScriptExecutor,
       const mozilla::Maybe<mozilla::gfx::Matrix4x4>& aMatrix,
       const mozilla::ScreenRect& aTopLevelViewportVisibleRectInBrowserCoords);
 
-  mozilla::ipc::IPCResult RecvKeyboardHeightChanged(
-      const mozilla::ScreenIntCoord& aHeight);
-
-  mozilla::ipc::IPCResult RecvAndroidPipModeChanged(bool aPipMode);
-
   mozilla::ipc::IPCResult RecvActivate(uint64_t aActionId);
 
   mozilla::ipc::IPCResult RecvDeactivate(uint64_t aActionId);
@@ -550,10 +545,6 @@ class BrowserChild final : public nsMessageManagerScriptExecutor,
 
   LayoutDeviceIntPoint GetClientOffset() const { return mClientOffset; }
   LayoutDeviceIntPoint GetChromeOffset() const { return mChromeOffset; };
-  mozilla::ScreenIntCoord GetKeyboardHeight() const { return mKeyboardHeight; }
-
-  bool InAndroidPipMode() const { return mInAndroidPipMode; }
-
   bool IPCOpen() const { return mIPCOpen; }
 
   const mozilla::layers::CompositorOptions& GetCompositorOptions() const;
@@ -858,8 +849,6 @@ class BrowserChild final : public nsMessageManagerScriptExecutor,
   // Position of tab, relative to parent widget (typically the window)
   // NOTE: This value is valuable only for the top level browser.
   LayoutDeviceIntPoint mChromeOffset;
-  // The software keyboard height.
-  ScreenIntCoord mKeyboardHeight;
   TabId mUniqueId;
 
   // Position of a delayed drop event.
@@ -869,9 +858,6 @@ class BrowserChild final : public nsMessageManagerScriptExecutor,
   bool mTriedBrowserInit : 1;
   bool mHasValidInnerSize : 1;
   bool mDestroyed : 1;
-  // Whether we're in Android's PiP mode.
-  bool mInAndroidPipMode : 1;
-
   // Whether or not this browser is the child part of the top level PBrowser
   // actor in a remote browser.
   bool mIsTopLevel : 1;

@@ -2217,9 +2217,6 @@ class Document : public nsINode,
    */
   bool LoadedFromPrototype() const { return mPrototypeDocument; }
 
-  /* Returns true if we're currently in Android's PiP mode. */
-  bool InAndroidPipMode() const;
-
   /**
    * Returns the prototype the document was created from, or null if it was not
    * created from a prototype.
@@ -2287,7 +2284,7 @@ class Document : public nsINode,
 
   /**
    * This function checks if the caller has access to privileged chrome APIs
-   * such as the storage access API and inAndroidPipMode. We only allow such
+   * such as the storage access API. We only allow such
    * APIs to be called by system principal and the built-in webcompat addon.
    */
   static bool CallerIsSystemPrincipalOrWebCompatAddon(JSContext* aCx,

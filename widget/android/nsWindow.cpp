@@ -34,7 +34,6 @@
 #include "MotionEvent.h"
 #include "ScopedGLHelpers.h"
 #include "ScreenHelperAndroid.h"
-#include "TouchResampler.h"
 #include "WidgetUtils.h"
 #include "WindowRenderer.h"
 
@@ -139,8 +138,6 @@ static bool sFailedToCreateGLContext = false;
 static const double SWIPE_MAX_PINCH_DELTA_INCHES = 0.4;
 static const double SWIPE_MIN_DISTANCE_INCHES = 0.6;
 
-static const double kTouchResampleVsyncAdjustMs = 5.0;
-
 static const int32_t INPUT_RESULT_UNHANDLED =
     java::PanZoomController::INPUT_RESULT_UNHANDLED;
 static const int32_t INPUT_RESULT_HANDLED =
@@ -204,18 +201,7 @@ class NPZCSupport final
   WindowPtr mWindow;
   java::PanZoomController::NativeProvider::WeakRef mNPZC;
 
-  // Stores the returnResult of each pending motion event between
-  // HandleMotionEvent and FinishHandlingMotionEvent.
-  std::queue<std::pair<uint64_t, java::GeckoResult::GlobalRef>>
-      mPendingMotionEventReturnResults;
-
-  RefPtr<AndroidVsync> mAndroidVsync;
-  TouchResampler mTouchResampler;
   int mPreviousButtons = 0;
-  bool mListeningToVsync = false;
-
-  // Only true if mAndroidVsync is non-null and the resampling pref is set.
-  bool mTouchResamplingEnabled = false;
 
   template <typename Lambda>
   class InputEvent final : public nsAppShell::Event {
@@ -266,38 +252,6 @@ class NPZCSupport final
     bool IsUIEvent() const override { return true; }
   };
 
-  class MOZ_HEAP_CLASS Observer final : public AndroidVsync::Observer {
-   public:
-    static Observer* Create(jni::NativeWeakPtr<NPZCSupport>&& aNPZCSupport) {
-      return new Observer(std::move(aNPZCSupport));
-    }
-
-   private:
-    // Private constructor, part of a strategy to make sure
-    // we're only able to create these on the heap.
-    explicit Observer(jni::NativeWeakPtr<NPZCSupport>&& aNPZCSupport)
-        : mNPZCSupport(std::move(aNPZCSupport)) {}
-
-    void OnVsync(const TimeStamp& aTimeStamp) override {
-      auto accessor = mNPZCSupport.Access();
-
-      if (!accessor) {
-        return;
-      }
-
-      accessor->mTouchResampler.NotifyFrame(
-          aTimeStamp -
-          TimeDuration::FromMilliseconds(kTouchResampleVsyncAdjustMs));
-      accessor->ConsumeMotionEventsFromResampler();
-    }
-
-    void Dispose() override { delete this; }
-
-    jni::NativeWeakPtr<NPZCSupport> mNPZCSupport;
-  };
-
-  Observer* mObserver = nullptr;
-
   template <typename Lambda>
   void PostInputEvent(Lambda&& aLambda) {
     // Use priority queue for input events.
@@ -316,15 +270,6 @@ class NPZCSupport final
     MOZ_ASSERT(!!win);
 #endif  // defined(DEBUG)
 
-    mAndroidVsync = AndroidVsync::GetInstance();
-  }
-
-  ~NPZCSupport() {
-    if (mListeningToVsync) {
-      MOZ_RELEASE_ASSERT(mAndroidVsync);
-      mAndroidVsync->UnregisterObserver(mObserver, AndroidVsync::INPUT);
-      mListeningToVsync = false;
-    }
   }
 
   using Base::AttachNative;
@@ -871,52 +816,8 @@ class NPZCSupport final
       input.mTouches.AppendElement(singleTouchData);
     }
 
-    if (mAndroidVsync &&
-        eventData->Action() == java::sdk::MotionEvent::ACTION_DOWN) {
-      // Query pref value at the beginning of a touch gesture so that we don't
-      // leave events stuck in the resampler after a pref flip.
-      mTouchResamplingEnabled = StaticPrefs::android_touch_resampling_enabled();
-    }
-
-    if (!mTouchResamplingEnabled) {
-      FinishHandlingMotionEvent(std::move(input),
-                                java::GeckoResult::LocalRef(returnResult));
-      return;
-    }
-
-    uint64_t eventId = mTouchResampler.ProcessEvent(std::move(input));
-    mPendingMotionEventReturnResults.push(
-        {eventId, java::GeckoResult::GlobalRef(returnResult)});
-
-    RegisterOrUnregisterForVsync(mTouchResampler.InTouchingState());
-    ConsumeMotionEventsFromResampler();
-  }
-
-  void RegisterOrUnregisterForVsync(bool aNeedVsync) {
-    MOZ_RELEASE_ASSERT(mAndroidVsync);
-    if (aNeedVsync && !mListeningToVsync) {
-      MOZ_ASSERT(!mObserver);
-      auto win = mWindow.Access();
-      if (!win) {
-        return;
-      }
-      RefPtr<nsWindow> gkWindow = win->GetNsWindow();
-      if (!gkWindow) {
-        return;
-      }
-      MutexAutoLock lock(gkWindow->GetDestroyMutex());
-      if (gkWindow->Destroyed()) {
-        return;
-      }
-      jni::NativeWeakPtr<NPZCSupport> weakPtrToThis =
-          gkWindow->GetNPZCSupportWeakPtr();
-      mObserver = Observer::Create(std::move(weakPtrToThis));
-      mAndroidVsync->RegisterObserver(mObserver, AndroidVsync::INPUT);
-    } else if (!aNeedVsync && mListeningToVsync) {
-      mAndroidVsync->UnregisterObserver(mObserver, AndroidVsync::INPUT);
-      mObserver = nullptr;
-    }
-    mListeningToVsync = aNeedVsync;
+    FinishHandlingMotionEvent(std::move(input),
+                              java::GeckoResult::LocalRef(returnResult));
   }
 
   void HandleDragEvent(int32_t aAction, int64_t aTime, float aX, float aY,
@@ -972,27 +873,6 @@ class NPZCSupport final
          dropData = jni::Object::GlobalRef(aDropData)](nsWindow* window) {
           window->OnDragEvent(aAction, aX, aY, dropData, result, input);
         });
-  }
-
-  void ConsumeMotionEventsFromResampler() {
-    auto outgoing = mTouchResampler.ConsumeOutgoingEvents();
-    while (!outgoing.empty()) {
-      auto outgoingEvent = std::move(outgoing.front());
-      outgoing.pop();
-      java::GeckoResult::GlobalRef returnResult;
-      if (outgoingEvent.mEventId) {
-        // Look up the GeckoResult for this event.
-        // The outgoing events from the resampler are in the same order as the
-        // original events, and no event IDs are skipped.
-        MOZ_RELEASE_ASSERT(!mPendingMotionEventReturnResults.empty());
-        auto pair = mPendingMotionEventReturnResults.front();
-        mPendingMotionEventReturnResults.pop();
-        MOZ_RELEASE_ASSERT(pair.first == *outgoingEvent.mEventId);
-        returnResult = pair.second;
-      }
-      FinishHandlingMotionEvent(std::move(outgoingEvent.mEvent),
-                                java::GeckoResult::LocalRef(returnResult));
-    }
   }
 
   void FinishHandlingMotionEvent(MultiTouchInput&& aInput,
@@ -1365,36 +1245,6 @@ class LayerViewSupport final
     }
 
     gkWindow->mCompositorBridgeChild->SendNotifyMemoryPressure();
-  }
-
-  void OnPipModeChanged(bool aPipMode) {
-    MOZ_ASSERT(NS_IsMainThread());
-    auto win(mWindow.Access());
-    if (!win) {
-      return;  // Already shut down.
-    }
-
-    nsWindow* gkWindow = win->GetNsWindow();
-    if (!gkWindow) {
-      return;
-    }
-
-    gkWindow->PipModeChanged(aPipMode);
-  }
-
-  void OnKeyboardHeightChanged(int32_t aHeight) {
-    MOZ_ASSERT(NS_IsMainThread());
-    auto win(mWindow.Access());
-    if (!win) {
-      return;  // Already shut down.
-    }
-
-    nsWindow* gkWindow = win->GetNsWindow();
-    if (!gkWindow) {
-      return;
-    }
-
-    gkWindow->KeyboardHeightChanged(ScreenIntCoord(aHeight));
   }
 
   void SyncPauseCompositor() {
@@ -3258,26 +3108,6 @@ void nsWindow::RecvScreenPixels(Shmem&& aMem, const ScreenIntSize& aSize,
   if (::mozilla::jni::NativeWeakPtr<LayerViewSupport>::Accessor lvs{
           mLayerViewSupport.Access()}) {
     lvs->RecvScreenPixels(std::move(aMem), aSize, aNeedsYFlip);
-  }
-}
-
-void nsWindow::PipModeChanged(bool aPipMode) {
-  if (mWidgetListener) {
-    mWidgetListener->AndroidPipModeChanged(aPipMode);
-  }
-
-  if (mAttachedWidgetListener) {
-    mAttachedWidgetListener->AndroidPipModeChanged(aPipMode);
-  }
-}
-
-void nsWindow::KeyboardHeightChanged(ScreenIntCoord aHeight) {
-  if (mWidgetListener) {
-    mWidgetListener->KeyboardHeightChanged(aHeight);
-  }
-
-  if (mAttachedWidgetListener) {
-    mAttachedWidgetListener->KeyboardHeightChanged(aHeight);
   }
 }
 

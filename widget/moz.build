@@ -278,7 +278,6 @@ UNIFIED_SOURCES += [
     "ThemeCocoa.cpp",
     "ThemeColors.cpp",
     "ThemeDrawing.cpp",
-    "TouchResampler.cpp",
     "VsyncDispatcher.cpp",
     "WidgetEventImpl.cpp",
     "WidgetUtils.cpp",

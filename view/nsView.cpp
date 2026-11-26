@@ -833,37 +833,6 @@ bool nsView::WindowResized(nsIWidget* aWidget, int32_t aWidth,
   return false;
 }
 
-#ifdef MOZ_WIDGET_ANDROID
-void nsView::KeyboardHeightChanged(ScreenIntCoord aHeight) {
-  MOZ_ASSERT(XRE_IsParentProcess(),
-             "Should be only called for the browser parent process");
-  MOZ_ASSERT(this == mViewManager->GetRootView(),
-             "Should be called for the root view");
-  CallOnAllRemoteChildren(
-      [aHeight](dom::BrowserParent* aBrowserParent) -> CallState {
-        // Skip background tabs.
-        if (!aBrowserParent->GetDocShellIsActive()) {
-          return CallState::Continue;
-        }
-
-        aBrowserParent->KeyboardHeightChanged(aHeight);
-        return CallState::Stop;
-      });
-}
-
-void nsView::AndroidPipModeChanged(bool aPipMode) {
-  MOZ_ASSERT(XRE_IsParentProcess(),
-             "Should be only called for the browser parent process");
-  MOZ_ASSERT(this == mViewManager->GetRootView(),
-             "Should be called for the root view");
-  CallOnAllRemoteChildren(
-      [aPipMode](dom::BrowserParent* aBrowserParent) -> CallState {
-        aBrowserParent->AndroidPipModeChanged(aPipMode);
-        return CallState::Continue;
-      });
-}
-#endif
-
 bool nsView::RequestWindowClose(nsIWidget* aWidget) {
   if (mFrame && IsPopupWidget(aWidget) && mFrame->IsMenuPopupFrame()) {
     if (nsXULPopupManager* pm = nsXULPopupManager::GetInstance()) {

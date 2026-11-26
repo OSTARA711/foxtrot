@@ -1169,20 +1169,6 @@ void BrowserParent::SizeModeChanged(const nsSizeMode& aSizeMode) {
   }
 }
 
-#ifdef MOZ_WIDGET_ANDROID
-void BrowserParent::KeyboardHeightChanged(ScreenIntCoord aHeight) {
-  if (!mIsDestroyed) {
-    Unused << SendKeyboardHeightChanged(aHeight);
-  }
-}
-
-void BrowserParent::AndroidPipModeChanged(bool aPipMode) {
-  if (!mIsDestroyed) {
-    Unused << SendAndroidPipModeChanged(aPipMode);
-  }
-}
-#endif
-
 void BrowserParent::HandleAccessKey(const WidgetKeyboardEvent& aEvent,
                                     nsTArray<uint32_t>& aCharCodes) {
   if (!mIsDestroyed) {

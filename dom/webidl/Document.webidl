@@ -385,12 +385,6 @@ partial interface Document {
   [ChromeOnly]
   readonly attribute boolean loadedFromPrototype;
 
-  // Whether we're in android's Picture-in-Picture mode.
-  // Top level document only (for now, if we want to deal with iframes, please
-  // also fix bug 1959448 while at it).
-  [Func="Document::CallerIsSystemPrincipalOrWebCompatAddon"]
-  readonly attribute boolean inAndroidPipMode;
-
   // The principal to use for the storage area of this document
   [ChromeOnly]
   readonly attribute Principal effectiveStoragePrincipal;

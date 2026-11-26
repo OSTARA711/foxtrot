@@ -237,7 +237,7 @@ Removed:
 
 The intervention was identified as a Mobile YouTube fix and checked the Android PiP state. Its JavaScript file and JSON registration were removed in the original cleanup commit.
 
-This change removes that particular WebCompat intervention only. It does not mean that the complete Android PiP API or its IPC and media-feature plumbing has been removed.
+The WebCompat intervention was removed in the earlier cleanup. The native Android PiP API, IPC messages, Document WebIDL attribute, CSS media feature, preference, static atoms and Gecko media-feature bindings have since been removed in the native platform cleanup.
 
 ## 10. Android and mobile dependency findings
 
@@ -278,7 +278,7 @@ The Android dynamic toolbar and keyboard notification path was traced through:
 
 The relevant BrowserChild state and getters include dynamic toolbar height and keyboard height. `PresShell.cpp` has a keyboard-height consumer, so removal must adapt that call while preserving generic viewport and keyboard APIs.
 
-The full dynamic toolbar and keyboard IPC chain has not yet been established as removed.
+The Android keyboard-height notification path has now been removed from the native widget, view and BrowserChild/BrowserParent IPC chain. The PresShell initialisation from BrowserChild has also been removed. Generic keyboard-height and viewport handling in MobileViewportManager and nsPresContext remains intact. The Android dynamic-toolbar path is a separate outstanding audit item.
 
 ### 10.5 Android PiP API and media feature
 
@@ -292,7 +292,7 @@ The Android PiP state path was traced through:
 - Servo Gecko media-feature implementation
 - The Mobile YouTube WebCompat intervention
 
-The WebCompat intervention has been removed. The Android-specific `Document.inAndroidPipMode` API and associated IPC/media-feature plumbing have not yet been established as removed.
+The native Android PiP API and its IPC, Document WebIDL, CSS media-feature, preference, static-atom and Servo binding paths have now been removed. The remaining PiP references are in the Android Java/GeckoView product, including GeckoSession and CompositorController. These belong to the separate mobile-product removal. The generated TypeScript declaration for Document.inAndroidPipMode must be regenerated through the normal bindings generation process rather than edited manually.
 
 ### 10.6 Compositor toolbar and screen-pixel IPC
 
@@ -376,7 +376,32 @@ The commit also modified shared GPU, compositor, APZ, WebRender, networking and 
 
 Shared graphics infrastructure and Linux desktop functionality were retained. This does not establish that all Android-specific compositor or graphics references have been removed.
 
-### 10.8 Other platform code retained pending review
+### 10.8 Touch resampling and Android VSync
+
+The Android touch-resampling implementation has been removed after confirming that its only production consumer was `widget/android/nsWindow.cpp`.
+
+Removed:
+
+- `widget/TouchResampler.cpp`
+- `widget/TouchResampler.h`
+- `widget/tests/gtest/TestTouchResampler.cpp`
+- The `TouchResampler.cpp` registration in `widget/moz.build`.
+- The `TestTouchResampler.cpp` registration in `widget/tests/gtest/moz.build`.
+- The `android.touch_resampling.enabled` preference in `modules/libpref/init/StaticPrefList.yaml`.
+- The resampler integration in `widget/android/nsWindow.cpp`, including its pending-result queue, observer, resampling state and event-draining path.
+
+Normal Android motion events now use the direct event-handling path. This preserves ordinary input handling without the removed resampling layer.
+
+`AndroidVsync` has deliberately been retained. Its remaining consumers include:
+
+- `gfx/thebes/gfxAndroidPlatform.cpp`, which uses the Android VSync implementation for the graphics platform's render VSync source.
+- `widget/android/ScreenHelperAndroid.cpp`, which uses it when screen refresh-rate information changes.
+
+These consumers belong to the remaining Android graphics and widget platform implementation. `AndroidVsync` should be reconsidered during the coordinated removal of those Android-specific components, not removed independently while they still depend on it.
+
+The TouchResampler removal passed the targeted source search and `git diff --check` in the local working tree. No build or test execution is claimed.
+
+### 10.9 Other platform code retained pending review
 
 The following were deliberately not removed wholesale:
 
@@ -400,8 +425,8 @@ The following work remains outstanding:
 
 1. Complete the repository-wide `mobile/` reference audit.
 2. Complete the separate `widget/android/` dependency audit.
-3. Review and remove the remaining Android dynamic toolbar and keyboard IPC chain, preserving generic viewport and keyboard APIs.
-4. Review and remove the Android PiP API, WebIDL, media feature and associated bindings where they are no longer required.
+3. Review and remove the remaining Android dynamic-toolbar IPC and cached-state paths, preserving shared desktop compositor and viewport functionality.
+4. Remove remaining Android Java PiP and keyboard callbacks as part of the mobile-product cleanup, then regenerate and verify generated bindings.
 5. Continue auditing Android-specific compositor messages, screen-pixel paths and cached state after removal of the UI compositor controller.
 6. Review remaining Android build configuration, test infrastructure and platform-specific references after the NDK, audio and performance cleanup.
 7. Audit `hal/android/` and its remaining consumers.

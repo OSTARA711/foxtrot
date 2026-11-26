@@ -279,13 +279,11 @@ BrowserChild::BrowserChild(ContentChild* aManager, const TabId& aTabId,
       mMaxTouchPoints(0),
       mLayersId{0},
       mEffectsInfo{EffectsInfo::FullyHidden()},
-      mKeyboardHeight(0),
       mUniqueId(aTabId),
       mDidFakeShow(false),
       mTriedBrowserInit(false),
       mHasValidInnerSize(false),
       mDestroyed(false),
-      mInAndroidPipMode(false),
       mIsTopLevel(aIsTopLevel),
       mIsTransparent(false),
       mIPCOpen(false),
@@ -1206,43 +1204,6 @@ mozilla::ipc::IPCResult BrowserChild::RecvUpdateRemoteStyle(
     document->AsImageDocument()->UpdateRemoteStyle(aImageRendering);
   }
 
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult BrowserChild::RecvKeyboardHeightChanged(
-    const ScreenIntCoord& aHeight) {
-#if defined(MOZ_WIDGET_ANDROID)
-  mKeyboardHeight = aHeight;
-
-  RefPtr<Document> document = GetTopLevelDocument();
-  if (!document) {
-    return IPC_OK();
-  }
-
-  if (nsPresContext* presContext = document->GetPresContext()) {
-    presContext->UpdateKeyboardHeight(aHeight);
-  }
-#endif
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult BrowserChild::RecvAndroidPipModeChanged(bool aPipMode) {
-  if (mInAndroidPipMode == aPipMode) {
-    return IPC_OK();
-  }
-  mInAndroidPipMode = aPipMode;
-  if (RefPtr<Document> document = GetTopLevelDocument()) {
-    if (nsPresContext* presContext = document->GetPresContext()) {
-      presContext->MediaFeatureValuesChanged(
-          {MediaFeatureChangeReason::DisplayModeChange},
-          MediaFeatureChangePropagation::JustThisDocument);
-    }
-    nsContentUtils::DispatchEventOnlyToChrome(
-        document, document,
-        aPipMode ? u"MozAndroidPipModeEntered"_ns
-                 : u"MozAndroidPipModeExited"_ns,
-        CanBubble::eYes, Cancelable::eNo, /* DefaultAction */ nullptr);
-  }
   return IPC_OK();
 }
 

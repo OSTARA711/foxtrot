@@ -6,7 +6,6 @@
 
 UNIFIED_SOURCES = [
     "TestTimeConverter.cpp",
-    "TestTouchResampler.cpp",
     "TestWidgetMouseEventCtors.cpp",
     "TestWidgetTouchEventCtors.cpp",
 ]

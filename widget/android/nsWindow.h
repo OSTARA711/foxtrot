@@ -246,10 +246,6 @@ class nsWindow final : public nsBaseWidget {
   mozilla::LayoutDeviceIntMargin GetSafeAreaInsets() const override;
   void UpdateSafeAreaInsets(const mozilla::LayoutDeviceIntMargin&);
 
-  void KeyboardHeightChanged(mozilla::ScreenIntCoord aHeight);
-
-  void PipModeChanged(bool aPipMode);
-
   mozilla::jni::NativeWeakPtr<mozilla::widget::NPZCSupport>
   GetNPZCSupportWeakPtr();
 

@@ -359,11 +359,6 @@
     value: true
     mirror: always
 
--   name: android.touch_resampling.enabled
-    type: RelaxedAtomicBool
-    value: false
-    mirror: always
-
 #endif
 
 #---------------------------------------------------------------------------
@@ -10335,12 +10330,6 @@
 - name: layout.css.h1-in-section-ua-styles.enabled
   type: RelaxedAtomicBool
   value: false
-  mirror: always
-
-# CSS for android picture-in-picture. See bug 1940052.
-- name: layout.css.android-pip.enabled
-  type: RelaxedAtomicBool
-  value: true
   mirror: always
 
 # The maximum width or height of the cursor we should allow when intersecting

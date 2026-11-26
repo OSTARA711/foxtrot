@@ -81,12 +81,6 @@ class nsIWidgetListener {
    */
   virtual void SizeModeChanged(nsSizeMode aSizeMode) {}
 
-#ifdef MOZ_WIDGET_ANDROID
-  /** Called when the software keyboard appears/disappears. */
-  virtual void KeyboardHeightChanged(mozilla::ScreenIntCoord aHeight) {}
-  virtual void AndroidPipModeChanged(bool) {}
-#endif
-
   /** Called when the macOS titlebar is shown while in fullscreen. */
   virtual void MacFullscreenMenubarOverlapChanged(
       mozilla::DesktopCoord aOverlapAmount) {}

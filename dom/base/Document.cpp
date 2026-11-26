@@ -19926,11 +19926,6 @@ bool Document::HasStorageAccessPermissionGrantedByAllowList() {
          nsILoadInfo::StoragePermissionAllowListed;
 }
 
-bool Document::InAndroidPipMode() const {
-  auto* bc = BrowserChild::GetFrom(GetDocShell());
-  return bc && bc->InAndroidPipMode();
-}
-
 nsIPrincipal* Document::EffectiveStoragePrincipal() const {
   if (!StaticPrefs::
           privacy_partition_always_partition_third_party_non_cookie_storage()) {
