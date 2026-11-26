@@ -14,19 +14,16 @@ from urllib.parse import urlparse
 
 import mozinfo
 import mozlog
-import moznetwork
 from mozprofile import DEFAULT_PORTS
 
 here = os.path.abspath(os.path.dirname(__file__))
 
 try:
-    from mozbuild.base import MachCommandConditions as conditions
     from mozbuild.base import MozbuildObject
 
     build_obj = MozbuildObject.from_environment(cwd=here)
 except ImportError:
     build_obj = None
-    conditions = None
 
 
 # Maps test flavors to data needed to run them
@@ -34,7 +31,7 @@ ALL_FLAVORS = {
     "mochitest": {
         "suite": "plain",
         "aliases": ("plain", "mochitest"),
-        "enabled_apps": ("firefox", "android"),
+        "enabled_apps": ("firefox",),
         "extra_args": {
             "flavor": "plain",
         },
@@ -51,7 +48,7 @@ ALL_FLAVORS = {
     "browser-chrome": {
         "suite": "browser",
         "aliases": ("browser", "browser-chrome", "mochitest-browser-chrome", "bc"),
-        "enabled_apps": ("firefox", "thunderbird"),
+        "enabled_apps": ("firefox",),
         "extra_args": {
             "flavor": "browser",
         },
@@ -184,14 +181,6 @@ class MochitestArguments(ArgumentContainer):
                     "/usr/bin/firefox. If you have run ./mach package beforehand, you can "
                     "specify 'dist' to run tests against the distribution bundle's binary."
                 ),
-            },
-        ],
-        [
-            ["--android"],
-            {
-                "action": "store_true",
-                "default": False,
-                "help": "Force an android test run.",
             },
         ],
         [
@@ -1256,183 +1245,10 @@ class MochitestArguments(ArgumentContainer):
         return options
 
 
-class AndroidArguments(ArgumentContainer):
-    """Android specific arguments."""
-
-    args = [
-        [
-            ["--no-install"],
-            {
-                "action": "store_true",
-                "default": False,
-                "help": "Skip the installation of the APK.",
-            },
-        ],
-        [
-            ["--aab"],
-            {
-                "action": "store_true",
-                "default": False,
-                "help": "Install the test_runner app using AAB.",
-            },
-        ],
-        [
-            ["--deviceSerial"],
-            {
-                "dest": "deviceSerial",
-                "help": "adb serial number of remote device. This is required "
-                "when more than one device is connected to the host. "
-                "Use 'adb devices' to see connected devices.",
-                "default": None,
-            },
-        ],
-        [
-            ["--adbpath"],
-            {
-                "dest": "adbPath",
-                "default": None,
-                "help": "Path to adb binary.",
-                "suppress": True,
-            },
-        ],
-        [
-            ["--activity"],
-            {
-                "dest": "appActivity",
-                "default": "TestRunnerActivity",
-                "help": (
-                    "Specify the android app activity that should be used (e.g. "
-                    "GeckoViewActivity for org.mozilla.geckoview_example). Uses "
-                    "TestRunnerActivity by default for org.mozilla.geckoview.test_"
-                    "runner"
-                ),
-            },
-        ],
-        [
-            ["--remote-webserver"],
-            {
-                "dest": "remoteWebServer",
-                "default": None,
-                "help": "IP address of the remote web server.",
-            },
-        ],
-        [
-            ["--http-port"],
-            {
-                "dest": "httpPort",
-                "default": DEFAULT_PORTS["http"],
-                "help": "http port of the remote web server.",
-                "suppress": True,
-            },
-        ],
-        [
-            ["--ssl-port"],
-            {
-                "dest": "sslPort",
-                "default": DEFAULT_PORTS["https"],
-                "help": "ssl port of the remote web server.",
-                "suppress": True,
-            },
-        ],
-        [
-            ["--remoteTestRoot"],
-            {
-                "dest": "remoteTestRoot",
-                "default": None,
-                "help": "Remote directory to use as test root "
-                "(eg. /data/local/tmp/test_root).",
-                "suppress": True,
-            },
-        ],
-        [
-            ["--enable-coverage"],
-            {
-                "action": "store_true",
-                "default": False,
-                "help": "Enable collecting code coverage information when running "
-                "junit tests.",
-            },
-        ],
-        [
-            ["--coverage-output-dir"],
-            {
-                "action": "store",
-                "default": None,
-                "help": "Save the code coverage report files to this directory.",
-            },
-        ],
-    ]
-
-    defaults = {
-        # we don't want to exclude specialpowers on android just yet
-        "extensionsToExclude": [],
-        # mochijar doesn't get installed via marionette on android
-        "extensionsToInstall": [os.path.join(here, "mochijar")],
-        "logFile": "mochitest.log",
-        "utilityPath": None,
-    }
-
-    def validate(self, parser, options, context):
-        """Validate android options."""
-
-        if build_obj:
-            options.log_mach = "-"
-
-            objdir_xpi_stage = os.path.join(build_obj.distdir, "xpi-stage")
-            if os.path.isdir(objdir_xpi_stage):
-                options.extensionsToInstall = [
-                    os.path.join(objdir_xpi_stage, "mochijar"),
-                    os.path.join(objdir_xpi_stage, "specialpowers"),
-                ]
-
-        if options.remoteWebServer is None:
-            options.remoteWebServer = moznetwork.get_ip()
-
-        options.webServer = options.remoteWebServer
-
-        if options.app is None:
-            options.app = "org.mozilla.geckoview.test_runner"
-
-        if build_obj and "MOZ_HOST_BIN" in os.environ:
-            options.xrePath = os.environ["MOZ_HOST_BIN"]
-
-        # Only reset the xrePath if it wasn't provided
-        if options.xrePath is None:
-            options.xrePath = options.utilityPath
-
-        if build_obj:
-            options.topsrcdir = build_obj.topsrcdir
-
-        if options.pidFile != "":
-            f = open(options.pidFile, "w")
-            f.write("%s" % os.getpid())
-            f.close()
-
-        if options.coverage_output_dir and not options.enable_coverage:
-            parser.error("--coverage-output-dir must be used with --enable-coverage")
-        if options.enable_coverage:
-            if not options.autorun:
-                parser.error("--enable-coverage cannot be used with --no-autorun")
-            if not options.coverage_output_dir:
-                parser.error(
-                    "--coverage-output-dir must be specified when using --enable-coverage"
-                )
-            parent_dir = os.path.dirname(options.coverage_output_dir)
-            if not os.path.isdir(options.coverage_output_dir):
-                parser.error(
-                    "The directory for the coverage output does not exist: %s"
-                    % parent_dir
-                )
-
-        # allow us to keep original application around for cleanup while
-        # running tests
-        options.remoteappname = options.app
-        return options
 
 
 container_map = {
     "generic": [MochitestArguments],
-    "android": [MochitestArguments, AndroidArguments],
 }
 
 
@@ -1467,12 +1283,6 @@ class MochitestArgumentParser(ArgumentParser):
         return args
 
     def parse_known_args(self, args=None, namespace=None):
-        if not self.app and any("--android" == arg for arg in args):
-            self.app = "android"
-
-        if not self.app and build_obj:
-            if conditions.is_android(build_obj):
-                self.app = "android"
         if not self.app:
             # platform can't be determined and app wasn't specified explicitly,
             # so just use generic arguments and hope for the best

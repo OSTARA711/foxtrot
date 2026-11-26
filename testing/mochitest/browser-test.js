@@ -360,9 +360,6 @@ Tester.prototype = {
       "__SS_tabsToRestore",
       "__SSi",
       "webConsoleCommandController",
-      // Thunderbird
-      "MailMigrator",
-      "SearchIntegration",
       // lit
       "reactiveElementVersions",
       "litHtmlVersions",
@@ -443,7 +440,6 @@ Tester.prototype = {
     if (
       this.currentTest &&
       window.gBrowser &&
-      AppConstants.MOZ_APP_NAME != "thunderbird" &&
       gBrowser.tabs.length > 1
     ) {
       let lastURI = "";
@@ -482,7 +478,7 @@ Tester.prototype = {
     }
 
     // Replace the last tab with a fresh one
-    if (window.gBrowser && AppConstants.MOZ_APP_NAME != "thunderbird") {
+    if (window.gBrowser) {
       gBrowser.addTab("about:blank", {
         skipAnimation: true,
         triggeringPrincipal:

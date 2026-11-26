@@ -114,9 +114,7 @@ TEST_HARNESS_FILES.testing.mochitest += [
     "mochitestListingsUtils.js",
     "pywebsocket_wrapper.py",
     "redirect.html",
-    "runjunit.py",
     "runtests.py",
-    "runtestsremote.py",
     "server.js",
     "start_desktop.js",
 ]
