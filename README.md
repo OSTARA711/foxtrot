@@ -1,6 +1,6 @@
 # Foxtrot
 
-**A Linux-focused, English-US browser built from Mozilla Firefox ESR.**
+**Linux-focused, English-US browser built from Mozilla Firefox ESR.**
 
 <p align="center">
   <img src="browser/branding/foxtrot/content/foxtrot.svg"
@@ -8,29 +8,135 @@
        width="500">
 </p>
 
-Foxtrot is a customised Firefox Extended Support Release (ESR) source tree, maintained with a focus on Linux desktop systems, English-US localisation, and Debian-based distribution.
+Foxtrot is an independently maintained Gecko browser for Linux desktops, built around security, user control, predictable behaviour and freedom from unwanted AI integration.
 
-The project retains Mozilla's browser engine and upstream source code while introducing its own branding and a streamlined Debian packaging configuration.
+The project retains Mozilla's Gecko engine and the upstream browser infrastructure required for a functional desktop browser, while maintaining its own branding, Debian packaging configuration and carefully selected product-level changes.
 
-> **Development status:** Foxtrot is currently a source-code project. Binary packages and installation instructions will be published when a build has been completed and tested.
+> **Development status:** Foxtrot is under active development. Its source tree and packaging configuration are being adapted for the intended Linux desktop distribution. Not every planned product change, security improvement or distribution service should be considered implemented.
 
 ## Project objectives
 
-- **Linux desktop focus** — prioritise Linux desktop integration and Debian-based distribution.
-- **English-US interface** — ship the browser with the `en-US` locale.
-- **Independent branding** — use Foxtrot branding for ESR, Beta, and Release builds.
-- **Debian packaging** — maintain Debian build rules and package integration.
-- **System integration** — use available system libraries where supported by the build configuration.
-- **Controlled updates** — disable the browser's built-in application updater; software updates are intended to be handled through the distribution's package management.
-- **Optional spell-checking dictionaries** — retain Hunspell integration without requiring an English-US dictionary to be bundled with the browser.
+Foxtrot is developed according to five priorities:
 
-## Upstream
+1. **Secure defaults** — choose browser defaults that reduce unnecessary exposure without compromising ordinary desktop use.
+2. **Remote-interface isolation** — prevent debugging, automation and other remote interfaces from being exposed to untrusted networks by default.
+3. **Extension and credential protection** — make browser privileges, extension permissions and credential handling understandable and appropriately restricted.
+4. **Stability** — favour predictable behaviour, upstream-compatible changes and dependable desktop integration.
+5. **Carefully selected features** — add functionality only where its benefits justify its maintenance and security costs.
 
-Foxtrot is based on Mozilla Firefox ESR.
+Foxtrot is not intended to accumulate features for their own sake. Every proposed feature must justify its maintenance cost, security implications and impact on future upstream rebasing.
 
-The current source version is **140.16.0**.
+## Supported platforms
 
-Foxtrot retains the upstream Mozilla source tree, including the browser engine, networking, security, rendering, JavaScript, accessibility, developer tools, and supporting components.
+The intended Foxtrot product is a Linux desktop browser.
+
+| Area | Supported scope |
+|---|---|
+| Operating system | Linux desktop |
+| CPU architectures | AMD64 / x86_64 and ARM64 / aarch64 |
+| Browser engine | Mozilla Gecko |
+| Upstream foundation | Firefox Extended Support Release (ESR) |
+| Interface language | English-US (`en-US`) |
+| Distribution format | Debian packages |
+| Packaging direction | Independent APT repository |
+
+Other operating systems, mobile products and unsupported CPU architectures are outside the intended product scope.
+
+Shared Mozilla source code is not removed merely because it also supports another platform. Components required by Linux desktop functionality, shared browser infrastructure or compatibility interfaces must be retained where necessary.
+
+## Product scope
+
+Foxtrot concentrates on the Linux desktop browsing experience.
+
+The intended product excludes:
+
+- Android, iOS and other mobile browser products and mobile-specific interfaces.
+- Visual Studio Code integration.
+- Non-English browser interface translations and language packs.
+- Integrated AI features and AI-specific runtime components.
+- Browser page-translation functionality and its translation models or runtime dependencies.
+- Snap and Flatpak packaging.
+
+These exclusions apply to product functionality and separable platform-specific infrastructure. They do not justify indiscriminate removal of shared Mozilla code that remains necessary for the desktop browser.
+
+## Security priorities
+
+Security is a development and testing priority. The following areas guide implementation and review; their inclusion here does not imply that every objective has already been completed.
+
+### Credential protection
+
+Foxtrot aims to make browser-controlled password prompts unmistakable and maintain clear boundaries between web content and privileged browser interfaces.
+
+Development and review should cover:
+
+- Credential storage and protection.
+- Password prompts and autofill behaviour.
+- Extension access to credentials and related browser interfaces.
+- Separation between untrusted web content and privileged browser functionality.
+
+### Extension containment
+
+Extensions can introduce significant privileges. Foxtrot prioritises clear permission visibility and containment.
+
+Development and review should cover:
+
+- Understandable permission requests.
+- Site-specific access controls where supported.
+- The distinction between trusted browser components and third-party extensions.
+- Unnecessary extension privileges and access to sensitive browser data.
+
+### Secure connection defaults
+
+HTTPS-Only Mode is a priority for evaluation as a default browser setting.
+
+Testing must cover:
+
+- Automatic HTTPS upgrades.
+- Fallback behaviour for websites that do not support HTTPS.
+- Local network services and development environments.
+- Compatibility and usability when secure connections cannot be established.
+
+HTTPS-Only Mode must not be described as enabled by default until the Foxtrot configuration and corresponding tests establish that behaviour.
+
+### Remote-interface isolation
+
+Debugging and automation interfaces must not become unintended network entry points.
+
+Development and review should cover:
+
+- Default network binding and exposure.
+- Authentication and access controls where supported.
+- Deliberate configuration before remote access is enabled.
+- Preservation of useful local desktop development and debugging capabilities.
+
+Removing mobile-specific functionality must not result in the unnecessary removal of shared Linux desktop debugging infrastructure.
+
+### Stability and maintainability
+
+Security improvements must remain maintainable across upstream ESR updates.
+
+Foxtrot favours:
+
+- Small, independently reviewable changes.
+- Upstream-supported solutions where practical.
+- Changes that are straightforward to test and revert.
+- Avoidance of unnecessary background services and runtime dependencies.
+- Attention to memory consumption and resource usage.
+- Testing across both supported CPU architectures.
+
+Foxtrot does not claim to be inherently more secure than Mozilla Firefox. Its security objectives must be demonstrated through implementation, configuration, testing and maintenance.
+
+## Upstream foundation
+
+Foxtrot originated from **Mozilla Firefox ESR 140.16.0**.
+
+The source tree was subsequently rebased onto **Firefox ESR 153.7.0**, whenever deem fit, as recorded in the Debian packaging changelog. The project continues to follow the Firefox ESR source and security-maintenance lineage while maintaining its own product decisions and distribution configuration.
+
+Foxtrot retains the upstream browser engine and the shared Mozilla infrastructure required for desktop browsing, including networking, rendering, JavaScript, accessibility, developer tools and supporting components.
+
+Upstream changes are evaluated with regard to desktop compatibility, security, maintainability and the cost of future ESR rebases.
+
+Useful upstream references:
 
 - [Mozilla Firefox](https://www.mozilla.org/firefox/)
 - [Firefox Source Documentation](https://firefox-source-docs.mozilla.org/)
@@ -38,12 +144,12 @@ Foxtrot retains the upstream Mozilla source tree, including the browser engine, 
 
 ## Repository structure
 
-The repository contains the Firefox source tree and Debian packaging.
+The repository contains the Firefox source tree and Foxtrot's Debian packaging.
 
 | Directory | Purpose |
 |---|---|
-| `browser/` | Browser application, interface, and branding |
-| `debian/` | Debian packaging, build rules, patches, and package configuration |
+| `browser/` | Browser application, interface and branding |
+| `debian/` | Debian packaging, build rules, patches and configuration |
 | `devtools/` | Developer tools |
 | `dom/` | Document Object Model and web platform implementation |
 | `gfx/` | Graphics and rendering |
@@ -55,7 +161,7 @@ The repository contains the Firefox source tree and Debian packaging.
 | `third_party/` | Vendored third-party dependencies |
 | `toolkit/` | Shared browser application infrastructure |
 
-Other directories contain additional Mozilla platform components, libraries, build infrastructure, and supporting source code.
+Other directories contain additional Mozilla platform components, libraries, build infrastructure and supporting source code.
 
 ## Building
 
@@ -77,27 +183,33 @@ A Debian package build can be initiated with:
 dpkg-buildpackage -b -uc -us
 ```
 
-This command assumes that the required build dependencies have already been installed and that the source tree is correctly prepared.
+This assumes that the required build dependencies have been installed and that the source tree is correctly prepared.
 
-Build instructions and supported configurations may evolve during development.
+Build instructions and supported configurations may evolve during development. A successful build alone does not establish that all Foxtrot product objectives have been implemented or tested.
 
 ## Localisation
 
-The browser is configured to ship with the English-US (`en-US`) locale.
+Foxtrot is intended to ship with the English-US (`en-US`) browser interface.
 
-The upstream localisation infrastructure and source directories remain in the repository. Their presence does not mean that translated browser interfaces or language packs are included in the intended Foxtrot build.
+Non-English interface translations and language packs are outside the intended product scope. Shared localisation infrastructure may remain where required by the Mozilla build system or other retained desktop components.
 
 The spell-checking engine is retained. Dictionaries are provided separately by the operating system when installed.
 
-## Updates and security
+## Updates and security maintenance
 
-The built-in application updater is disabled in the Debian build configuration.
+Foxtrot disables the browser's built-in application updater in its Debian build configuration.
 
-The intended distribution model is to deliver browser updates through Debian packages rather than through the browser's own application updater.
+The intended distribution model is to deliver browser updates through Debian packages and an independently maintained APT repository.
 
-Security fixes and upstream ESR updates remain essential. A customised browser must not be considered secure merely because its updater has been disabled.
+This requires ongoing maintenance:
 
-Users and distributors should follow Mozilla security advisories and ensure that Foxtrot packages are rebuilt and distributed with relevant security updates.
+- Track relevant Firefox ESR security releases.
+- Review upstream changes and Debian packaging updates.
+- Rebuild and test packages for supported architectures.
+- Distribute security updates promptly.
+- Verify that Foxtrot-specific changes remain compatible with upstream updates.
+
+Disabling the browser updater does not itself provide an update mechanism or make an installation secure. Users and distributors must obtain and install maintained Foxtrot packages.
 
 See [SECURITY.md](SECURITY.md) for security reporting information.
 
@@ -117,11 +229,17 @@ Development takes place in this repository:
 
 [https://github.com/OSTARA711/foxtrot](https://github.com/OSTARA711/foxtrot)
 
-Issues, bug reports, and development discussions can be submitted through the repository's GitHub issue tracker.
+Issues, bug reports and development discussions can be submitted through the repository's GitHub issue tracker.
 
-Contributions should preserve applicable upstream copyright notices and licence information.
+Contributions should:
+
+- Preserve applicable upstream copyright notices and licence information.
+- Respect Foxtrot's Linux desktop product scope.
+- Avoid unnecessary divergence from upstream Mozilla code.
+- Include appropriate tests for behavioural changes.
+- Consider security, resource usage and future ESR maintenance.
 
 ---
 
 **Foxtrot**  
-Linux-focused Firefox ESR development.
+An independently maintained Gecko browser for Linux desktops.
