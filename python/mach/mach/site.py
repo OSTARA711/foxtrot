@@ -1157,6 +1157,8 @@ class ExternalPythonSite:
         self._prefix = os.path.dirname(os.path.dirname(python_executable))
         self.python_path = python_executable
 
+
+
     @functools.lru_cache(maxsize=None)
     def sys_path(self):
         """Return lists of sys.path entries: one for standard library, one for the site
@@ -1228,26 +1230,13 @@ class ExternalPythonSite:
         stdlib, _ = self.sys_path()
         return stdlib
 
-
 @functools.lru_cache(maxsize=None)
 def resolve_requirements(topsrcdir, site_name):
-    thunderbird_dir = Path(topsrcdir, "comm")
-    is_thunderbird = thunderbird_dir.exists() and any(thunderbird_dir.iterdir())
-    prefixes = [Path(topsrcdir)]
-    if is_thunderbird:
-        prefixes.insert(0, thunderbird_dir)
-
+    prefix = Path(topsrcdir)
     manifest_suffix = Path("python", "sites", f"{site_name}.txt")
-    manifest_path = next(
-        (
-            prefix / manifest_suffix
-            for prefix in prefixes
-            if (prefix / manifest_suffix).exists()
-        ),
-        None,
-    )
+    manifest_path = prefix / manifest_suffix
 
-    if manifest_path is None:
+    if not manifest_path.is_file():
         raise Exception(
             f'The current command is using the "{site_name}" '
             "site. However, that site is missing its associated "
@@ -1257,7 +1246,6 @@ def resolve_requirements(topsrcdir, site_name):
     try:
         requirements = MachEnvRequirements.from_requirements_definition(
             topsrcdir,
-            is_thunderbird,
             site_name not in PIP_NETWORK_INSTALL_RESTRICTED_VIRTUALENVS,
             manifest_path,
         )

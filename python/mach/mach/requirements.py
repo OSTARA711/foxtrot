@@ -1,15 +1,12 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 import os
 import re
 from pathlib import Path
 
 from packaging.requirements import Requirement
-
-THUNDERBIRD_PYPI_ERROR = """
-Thunderbird requirements definitions cannot include PyPI packages.
-""".strip()
 
 
 class PthSpecifier:
@@ -51,10 +48,6 @@ class MachEnvRequirements:
     packages.txt -- Denotes that the specified path is a child manifest. It
         will be read and processed as if its contents were concatenated
         into the manifest being read.
-
-    thunderbird-packages.txt -- Denotes a Thunderbird child manifest.
-        Thunderbird child manifests are only activated when working on Thunderbird,
-        and they can cannot have "pypi" or "pypi-optional" entries.
     """
 
     def __init__(self):
@@ -82,7 +75,6 @@ class MachEnvRequirements:
     def from_requirements_definition(
         cls,
         topsrcdir: str,
-        is_thunderbird,
         only_strict_requirements,
         requirements_definition,
     ):
@@ -91,7 +83,6 @@ class MachEnvRequirements:
             requirements,
             Path(requirements_definition),
             Path(topsrcdir),
-            is_thunderbird,
             only_strict_requirements,
         )
         return requirements
@@ -101,11 +92,10 @@ def _parse_mach_env_requirements(
     requirements_output,
     root_requirements_path: Path,
     topsrcdir: Path,
-    is_thunderbird,
     only_strict_requirements,
 ):
     def _parse_requirements_line(
-        current_requirements_path: Path, line, line_number, is_thunderbird_packages_txt
+        current_requirements_path: Path, line, line_number
     ):
         line = line.strip()
         if not line or line.startswith("#"):
@@ -133,9 +123,6 @@ def _parse_mach_env_requirements(
         elif action == "vendored":
             requirements_output.vendored_requirements.append(PthSpecifier(params))
         elif action == "vendored-fallback":
-            if is_thunderbird_packages_txt:
-                raise Exception(THUNDERBIRD_PYPI_ERROR)
-
             pypi_pkg, vendored_path, repercussion = params.split(":")
             requirements = topsrcdir / "third_party" / "python" / "requirements.txt"
             with open(requirements) as req:
@@ -159,23 +146,14 @@ def _parse_mach_env_requirements(
                 PthSpecifier(vendored_path)
             )
         elif action == "packages.txt":
-            _parse_requirements_definition_file(
-                topsrcdir / params,
-                is_thunderbird_packages_txt,
-            )
+            _parse_requirements_definition_file(topsrcdir / params)
         elif action == "pypi":
-            if is_thunderbird_packages_txt:
-                raise Exception(THUNDERBIRD_PYPI_ERROR)
-
             requirements_output.pypi_requirements.append(
                 PypiSpecifier(
                     _parse_package_specifier(params, only_strict_requirements)
                 )
             )
         elif action == "pypi-optional":
-            if is_thunderbird_packages_txt:
-                raise Exception(THUNDERBIRD_PYPI_ERROR)
-
             if len(params.split(":", maxsplit=1)) != 2:
                 raise Exception(
                     "Expected pypi-optional package to have a repercussion "
@@ -189,17 +167,10 @@ def _parse_mach_env_requirements(
                     _parse_package_specifier(raw_requirement, only_strict_requirements),
                 )
             )
-        elif action == "thunderbird-packages.txt":
-            if is_thunderbird:
-                _parse_requirements_definition_file(
-                    topsrcdir / params, is_thunderbird_packages_txt=True
-                )
         else:
             raise Exception("Unknown requirements definition action: %s" % action)
 
-    def _parse_requirements_definition_file(
-        requirements_path: Path, is_thunderbird_packages_txt
-    ):
+    def _parse_requirements_definition_file(requirements_path: Path):
         """Parse requirements file into list of requirements"""
         if not requirements_path.is_file():
             raise Exception(f'Missing requirements file at "{requirements_path}"')
@@ -218,11 +189,9 @@ def _parse_mach_env_requirements(
             )
 
         for number, line in enumerate(lines, start=1):
-            _parse_requirements_line(
-                requirements_path, line, number, is_thunderbird_packages_txt
-            )
+            _parse_requirements_line(requirements_path, line, number)
 
-    _parse_requirements_definition_file(root_requirements_path, False)
+    _parse_requirements_definition_file(root_requirements_path)
 
 
 class UnexpectedFlexibleRequirementException(Exception):

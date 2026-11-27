@@ -31,11 +31,20 @@ Shared Mozilla code should be retained where it is genuinely required by the Lin
 
 ## 2. Repository state and review limitations
 
-The audit began with commit `d429867af0` and has subsequently been extended to cover the committed cleanup through:
+The audit began with commit `d429867af0` and has subsequently been
+extended to cover the committed cleanup through:
 
-`6ab711feb9c1a7b2665bc92befe95ca23dc21c06`
+`4e270fde415364964912c5e88e110fa8041e1788`
 
-The latest observed repository commit on `main` is `6ab711feb9`.
+The latest observed repository commit on `main` is `4e270fde41`.
+
+The Thunderbird and Mochitest cleanup was committed in two stages:
+
+- `cd01d06b84` — Remove Android and Thunderbird Mochitest support.
+- `4e270fde41` — Remove Thunderbird-specific code paths.
+
+The latest commit also contains Android-related changes. Those changes are
+not all part of the Thunderbird cleanup.
 
 The original GeckoView and Android desktop cleanup was committed in `821e313534`. Subsequent commits extended the removal to Android build tooling, audio backends, performance infrastructure, accessibility, compositor-controller and HardwareBuffer implementations.
 
@@ -419,6 +428,95 @@ The following were deliberately not removed wholesale:
 
 Windows and macOS product builds are outside Foxtrot's supported scope. Their shared source code should nevertheless only be removed where it is demonstrably unnecessary and does not break retained Mozilla infrastructure.
 
+### 10.10 Thunderbird application removal
+
+Foxtrot is a Firefox-based Linux desktop browser. Thunderbird is not a supported
+application target. Thunderbird-specific application selection, configuration
+branches and test exclusions have therefore been removed where they were no
+longer required by the Firefox desktop build.
+
+The removal was committed in two stages.
+
+#### Mochitest application support — `cd01d06b84`
+
+- Restricted supported Mochitest applications to Firefox.
+- Removed dedicated Android and GeckoView JUnit runners, their command
+  registration and dispatch logic.
+- Removed Thunderbird-specific browser-test handling.
+- Retained shared desktop Mochitest infrastructure.
+
+#### Thunderbird application-specific code — `4e270fde41`
+
+**FxAccounts**
+
+- Removed `CLIENT_IS_THUNDERBIRD`.
+- Removed Thunderbird's OAuth client ID and Thunderbird Sync scope.
+- Made Firefox's OAuth client ID and Sync scope unconditional.
+- Removed Thunderbird-specific branches from FxAccounts commands and tests.
+- Removed Thunderbird-only test exclusions from
+  `services/fxaccounts/tests/xpcshell/xpcshell.toml`.
+
+**Sync**
+
+- Made Firefox Sync engine registration unconditional.
+- Removed Thunderbird application selection from Sync module loading and
+  startup tests.
+- Retained Firefox bookmarks, forms, history and tabs Sync functionality.
+
+**Remote Settings**
+
+- Made the Firefox Remote Settings server URL unconditional.
+- Enabled signature verification unconditionally.
+- Made the default Remote Settings bucket `main`.
+
+**Build configuration and application handling**
+
+- Removed Thunderbird from the Windows notification-server default condition
+  in `build/moz.configure/update-programs.configure`.
+- Removed Thunderbird-specific handling from toolkit build configuration,
+  application constants, localisation, content and extension build selection.
+- Removed Thunderbird-specific startup and profile-directory handling from
+  `toolkit/xre/nsXREDirProvider.cpp`.
+- Restricted the relevant Debian packaging and Remote Settings dump handling
+  to the Firefox browser application.
+
+**Extensions and other shared components**
+
+- Removed Thunderbird-specific content-process selection logic from the
+  extension implementation.
+- Removed Thunderbird-specific message-manager group handling from
+  `toolkit/components/extensions/ExtensionPolicyService.cpp`.
+- Removed Thunderbird-specific crash-handling and platform-specific branches
+  where they were no longer applicable.
+
+#### Retained functionality
+
+The removal does not mean that all Mozilla code shared with Thunderbird
+should be deleted.
+
+Shared Gecko, networking, account, extension, security, Remote Settings and
+Sync infrastructure remains where required by Firefox. Firefox account and
+Sync functionality remain; the changes remove Thunderbird-specific application
+selection and behaviour.
+
+#### Validation status
+
+The committed source changes were inspected. Targeted searches in
+`services/fxaccounts/` found no remaining `CLIENT_IS_THUNDERBIRD` references,
+Thunderbird OAuth client ID or Thunderbird Sync scope. Thunderbird-specific
+test exclusions were removed from the FxAccounts test manifest.
+
+This does not establish that every Thunderbird reference has been removed from
+the entire repository. Remaining matches must be assessed individually,
+distinguishing obsolete application code from shared Mozilla infrastructure,
+historical comments, documentation and unrelated test data.
+
+The latest commit also contains Android cleanup. Its entire changed-file list
+must not be attributed to Thunderbird removal.
+
+No successful full Linux build or complete test-suite execution is claimed
+for these changes.
+
 ## 11. Remaining work
 
 The following work remains outstanding:
@@ -434,6 +532,11 @@ The following work remains outstanding:
 9. Complete clean Linux x86_64 and ARM64 builds.
 10. Run relevant test suites and packaging checks.
 11. Review the complete cumulative source changes before declaring the platform cleanup complete.
+12. Complete a repository-wide Thunderbird reference audit. Inspect remaining
+    `thunderbird`, `MOZ_THUNDERBIRD`, `comm/mail` and application-name matches.
+    Remove obsolete Thunderbird-specific code while retaining genuinely shared
+    Gecko infrastructure and unrelated historical references where appropriate.
+
 
 ## 12. Validation and security claims
 

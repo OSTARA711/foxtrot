@@ -16,7 +16,7 @@ from mozbuild.base import (
     BinaryNotFoundException,
 )
 
-SUPPORTED_APPS = ["firefox", "android", "thunderbird"]
+SUPPORTED_APPS = ["firefox", "android"]
 
 
 def create_parser_tests():
@@ -84,24 +84,15 @@ def marionette_test(command_context, tests, allow_nonlocal_connections=False, **
         del kwargs["test_objects"]
 
     if not tests:
-        if conditions.is_thunderbird(command_context):
-            tests = [
-                os.path.join(
-                    command_context.topsrcdir,
-                    "comm/testing/marionette/unit-tests.toml",
-                )
-            ]
-        else:
-            tests = [
-                os.path.join(
-                    command_context.topsrcdir,
-                    "testing/marionette/harness/marionette_harness/tests/unit-tests.toml",
-                )
-            ]
+        tests = [
+            os.path.join(
+                command_context.topsrcdir,
+                "testing/marionette/harness/marionette_harness/tests/unit-tests.toml",
+            )
+        ]
 
-    if not kwargs.get("binary") and (
-        conditions.is_firefox(command_context)
-        or conditions.is_thunderbird(command_context)
+    if not kwargs.get("binary") and conditions.is_firefox(command_context):
+
     ):
         try:
             kwargs["binary"] = command_context.get_binary_path("app")

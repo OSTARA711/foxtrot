@@ -114,28 +114,6 @@ class GeckoJobConfiguration:
 class AndroidJobConfiguration(GeckoJobConfiguration):
     product = "mobile"
 
-
-class ThunderbirdJobConfiguration:
-    trust_domain = "comm"
-    product = "thunderbird"
-    default_candidate_trees = [
-        "releases/comm-release",
-    ]
-    nightly_candidate_trees = [
-        "comm-central",
-    ]
-    beta_candidate_trees = [
-        "releases/comm-beta",
-    ]
-    # The list below list should be updated when we have new ESRs.
-    esr_candidate_trees = [
-        "releases/comm-esr115",
-        "releases/comm-esr128",
-        "releases/comm-esr140",
-    ]
-    try_tree = "try-comm-central"
-
-
 class ArtifactJob:
     # These are a subset of TEST_HARNESS_BINS in testing/mochitest/Makefile.in.
     # Each item is a pair of (pattern, (src_prefix, dest_prefix), where src_prefix
@@ -204,12 +182,9 @@ class ArtifactJob:
         download_tests=True,
         download_symbols=False,
         download_maven_zip=False,
-        override_job_configuration=None,
         substs=None,
         mozbuild=None,
     ):
-        if override_job_configuration is not None:
-            self.job_configuration = override_job_configuration
 
         self._package_re = re.compile(self.package_re)
         self._tests_re = None
@@ -1195,11 +1170,6 @@ class Artifacts:
         self._no_process = no_process
         self._unfiltered_project_package = unfiltered_project_package
 
-        job_configuration = (
-            ThunderbirdJobConfiguration
-            if substs.get("MOZ_BUILD_APP") == "comm/mail"
-            else None
-        )
         if not self._unfiltered_project_package:
             try:
                 cls = JOB_DETAILS[self._job]
