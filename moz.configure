@@ -567,7 +567,7 @@ def build_gtest(build_project, target, automation, enable_tests):
     return bool(
         enable_tests
         and automation
-        and build_project in ("browser", "comm/mail")
+        and build_project == "browser"
         and not (target.os == "Android" and target.cpu != "x86_64")
     )
 

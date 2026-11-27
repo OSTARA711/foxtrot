@@ -159,7 +159,7 @@ abstract class EngineSession(
 
         /**
          * Based on the webpage current state the toolbar should be expanded to it's full height
-         * previously specified in [EngineView.setDynamicToolbarMaxHeight].
+         * previously specified by the embedding application.
          */
         fun onShowDynamicToolbar() = Unit
 

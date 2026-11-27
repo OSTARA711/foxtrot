@@ -71,15 +71,15 @@ function getEngineModules() {
     Password: { module: "passwords.sys.mjs", symbol: "PasswordEngine" },
     Prefs: { module: "prefs.sys.mjs", symbol: "PrefsEngine" },
   };
-  if (AppConstants.MOZ_APP_NAME != "thunderbird") {
-    result.Bookmarks = {
-      module: "bookmarks.sys.mjs",
-      symbol: "BookmarksEngine",
-    };
-    result.Form = { module: "forms.sys.mjs", symbol: "FormEngine" };
-    result.History = { module: "history.sys.mjs", symbol: "HistoryEngine" };
-    result.Tab = { module: "tabs.sys.mjs", symbol: "TabEngine" };
-  }
+
+  result.Bookmarks = {
+    module: "bookmarks.sys.mjs",
+    symbol: "BookmarksEngine",
+  };
+  result.Form = { module: "forms.sys.mjs", symbol: "FormEngine" };
+  result.History = { module: "history.sys.mjs", symbol: "HistoryEngine" };
+  result.Tab = { module: "tabs.sys.mjs", symbol: "TabEngine" };
+
   if (Svc.PrefBranch.getBoolPref("engine.addresses.available", false)) {
     result.Addresses = {
       module: "resource://autofill/FormAutofillSync.sys.mjs",

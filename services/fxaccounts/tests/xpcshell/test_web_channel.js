@@ -4,7 +4,6 @@
 "use strict";
 
 const {
-  CLIENT_IS_THUNDERBIRD,
   ON_PROFILE_CHANGE_NOTIFICATION,
   WEBCHANNEL_ID,
   log,
@@ -765,7 +764,6 @@ add_task(async function test_helpers_login_with_customize_sync() {
 });
 
 add_task(
-  { skip_if: () => CLIENT_IS_THUNDERBIRD },
   async function test_helpers_login_with_customize_sync_and_declined_engines() {
     ensureOauthNotConfigured();
     let configured = false;

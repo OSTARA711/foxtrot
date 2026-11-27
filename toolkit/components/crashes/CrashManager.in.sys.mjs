@@ -975,19 +975,14 @@ CrashManager.prototype = Object.freeze({
     // Filter the remaining annotations to remove privacy-sensitive ones
     reportMeta = this._filterAnnotations(reportMeta);
 
-    // Glean crash pings should not be sent on Android: they are handled
-    // separately in lib-crash for Fenix (and potentially other GeckoView
-    // users).
-    if (AppConstants.platform !== "android") {
-      this._submitGleanCrashPing(
-        reason,
-        type,
-        date,
-        minidumpSha256Hash,
-        stackTraces,
-        reportMeta
-      );
-    }
+    this._submitGleanCrashPing(
+      reason,
+      type,
+      date,
+      minidumpSha256Hash,
+      stackTraces,
+      reportMeta
+    );
 
     if (onlyGlean) {
       return;

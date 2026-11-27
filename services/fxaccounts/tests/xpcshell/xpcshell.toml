@@ -20,7 +20,6 @@ support-files = [
 ["test_commands.js"]
 
 ["test_commands_closetab.js"]
-skip-if = ["appname == 'thunderbird'"]
 
 ["test_credentials.js"]
 
@@ -47,7 +46,6 @@ skip-if = ["appname == 'thunderbird'"]
 ["test_storage_manager.js"]
 
 ["test_sync_warning_dialogs.js"]
-skip-if = ["appname == 'thunderbird'"]
 
 ["test_telemetry.js"]
 

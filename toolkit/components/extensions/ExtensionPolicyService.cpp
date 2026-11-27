@@ -373,11 +373,6 @@ static bool IsTabOrExtensionBrowser(dom::BrowsingContext* aBC) {
   const auto& group = aBC->Top()->GetMessageManagerGroup();
   bool rv = group == u"browsers"_ns || group == u"webext-browsers"_ns;
 
-#ifdef MOZ_THUNDERBIRD
-  // ...unless it's Thunderbird, which has extra groups for unrelated reasons.
-  rv = rv || group == u"single-site"_ns || group == u"single-page"_ns;
-#endif
-
   return rv;
 }
 

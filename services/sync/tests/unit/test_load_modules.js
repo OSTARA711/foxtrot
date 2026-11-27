@@ -1,10 +1,6 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-const { AppConstants } = ChromeUtils.importESModule(
-  "resource://gre/modules/AppConstants.sys.mjs"
-);
-
 const modules = [
   "addonutils.sys.mjs",
   "addonsreconciler.sys.mjs",
@@ -28,14 +24,12 @@ const modules = [
   "util.sys.mjs",
 ];
 
-if (AppConstants.MOZ_APP_NAME != "thunderbird") {
-  modules.push(
-    "engines/bookmarks.sys.mjs",
-    "engines/forms.sys.mjs",
-    "engines/history.sys.mjs",
-    "engines/tabs.sys.mjs"
-  );
-}
+modules.push(
+  "engines/bookmarks.sys.mjs",
+  "engines/forms.sys.mjs",
+  "engines/history.sys.mjs",
+  "engines/tabs.sys.mjs"
+);
 
 const testingModules = [
   "fakeservices.sys.mjs",

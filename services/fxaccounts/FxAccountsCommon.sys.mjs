@@ -2,7 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { AppConstants } from "resource://gre/modules/AppConstants.sys.mjs";
 import { Log } from "resource://gre/modules/Log.sys.mjs";
 import { LogManager } from "resource://gre/modules/LogManager.sys.mjs";
 
@@ -90,22 +89,13 @@ export let COMMAND_CLOSETAB_TAIL = "close-uri/v1";
 export let COMMAND_CLOSETAB = COMMAND_PREFIX + COMMAND_CLOSETAB_TAIL;
 
 // OAuth
-export let CLIENT_IS_THUNDERBIRD = AppConstants.MOZ_APP_NAME == "thunderbird";
-let FX_OAUTH_CLIENT_ID = "5882386c6d801776";
-let TB_OAUTH_CLIENT_ID = "8269bacd7bbc7f80";
-export let OAUTH_CLIENT_ID = CLIENT_IS_THUNDERBIRD
-  ? TB_OAUTH_CLIENT_ID
-  : FX_OAUTH_CLIENT_ID;
+export let OAUTH_CLIENT_ID = "5882386c6d801776";
 export let SCOPE_PROFILE = "profile";
 export let SCOPE_PROFILE_WRITE = "profile:write";
+
 // Sync scope in Firefox.
 export let SCOPE_OLD_SYNC = "https://identity.mozilla.com/apps/oldsync";
-// Sync scope in Thunderbird.
-let SCOPE_THUNDERBIRD_SYNC = "https://identity.thunderbird.net/apps/sync";
-// The scope to use for sync, depending on the current application.
-export let SCOPE_APP_SYNC = CLIENT_IS_THUNDERBIRD
-  ? SCOPE_THUNDERBIRD_SYNC
-  : SCOPE_OLD_SYNC;
+export let SCOPE_APP_SYNC = SCOPE_OLD_SYNC;
 
 // This scope was previously used to calculate a telemetry tracking identifier for
 // the account, but that system has since been decommissioned. It's here entirely
@@ -115,8 +105,7 @@ export let SCOPE_APP_SYNC = CLIENT_IS_THUNDERBIRD
 export let DEPRECATED_SCOPE_ECOSYSTEM_TELEMETRY =
   "https://identity.mozilla.com/ids/ecosystem_telemetry";
 
-// OAuth metadata for other Firefox-related services that we might need to know about
-// in order to provide an enhanced user experience.
+// OAuth metadata for other Firefox-related services, in order to provide an enhanced user experience.
 export let FX_MONITOR_OAUTH_CLIENT_ID = "802d56ef2a9af9fa";
 export let FX_RELAY_OAUTH_CLIENT_ID = "9ebfe2c2f9ea3c58";
 export let VPN_OAUTH_CLIENT_ID = "e6eb0d1e856335fc";

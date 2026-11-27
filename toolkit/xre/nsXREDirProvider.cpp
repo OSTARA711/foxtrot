@@ -53,13 +53,6 @@
 #include "mozilla/XREAppData.h"
 #include "nsPrintfCString.h"
 
-#ifdef MOZ_THUNDERBIRD
-#  include "nsIPK11TokenDB.h"
-#  include "nsIPK11Token.h"
-#  ifdef XP_MACOSX
-#    include "MacApplicationDelegate.h"
-#  endif
-#endif
 
 #include <stdlib.h>
 
@@ -598,35 +591,6 @@ nsXREDirProvider::DoStartup() {
       }
     }
 
-#ifdef MOZ_THUNDERBIRD
-    bool bgtaskMode = false;
-#  ifdef MOZ_BACKGROUNDTASKS
-    bgtaskMode = mozilla::BackgroundTasks::IsBackgroundTaskMode();
-#  endif
-    if (!bgtaskMode &&
-        mozilla::Preferences::GetBool(
-            "security.prompt_for_master_password_on_startup", false)) {
-#  ifdef XP_MACOSX
-      // Ensure the application is initialized before the prompt is triggered.
-      // Note: calling InitializeMacApp more than once does nothing.
-      InitializeMacApp();
-#  endif
-      // Prompt for the master password prior to opening application windows,
-      // to avoid the race that triggers multiple prompts (see bug 177175).
-      // We use this code until we have a better solution, possibly as
-      // described in bug 177175 comment 384.
-      nsCOMPtr<nsIPK11TokenDB> db =
-          do_GetService("@mozilla.org/security/pk11tokendb;1");
-      if (db) {
-        nsCOMPtr<nsIPK11Token> token;
-        if (NS_SUCCEEDED(db->GetInternalKeyToken(getter_AddRefs(token)))) {
-          mozilla::Unused << token->Login(false);
-        }
-      } else {
-        NS_WARNING("Failed to get nsIPK11TokenDB service.");
-      }
-    }
-#endif
 
     bool initExtensionManager =
 #ifdef MOZ_BACKGROUNDTASKS
@@ -865,7 +829,7 @@ nsresult nsXREDirProvider::GetLegacyInstallHash(nsAString& aPathHash) {
   NS_ENSURE_SUCCESS(rv, rv);
 
 #ifdef XP_WIN
-#  if defined(MOZ_THUNDERBIRD) || defined(MOZ_SUITE)
+#  ifdef MOZ_SUITE
   // Convert a 64-bit install path to what would have been the 32-bit install
   // path to allow users to migrate their profiles from one to the other.
   PWSTR pathX86 = nullptr;
@@ -1043,11 +1007,7 @@ nsresult nsXREDirProvider::GetUserDataDirectoryHome(nsIFile** aFile,
   if (aLocal) {
     folderType = kCachedDataFolderType;
   } else {
-#  ifdef MOZ_THUNDERBIRD
-    folderType = kDomainLibraryFolderType;
-#  else
     folderType = kApplicationSupportFolderType;
-#  endif
   }
   OSErr err = ::FSFindFolder(kUserDomain, folderType, kCreateFolder, &fsRef);
   NS_ENSURE_FALSE(err, NS_ERROR_FAILURE);

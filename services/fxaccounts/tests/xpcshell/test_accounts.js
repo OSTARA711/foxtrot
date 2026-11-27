@@ -13,7 +13,6 @@ const { FxAccountsClient } = ChromeUtils.importESModule(
   "resource://gre/modules/FxAccountsClient.sys.mjs"
 );
 const {
-  CLIENT_IS_THUNDERBIRD,
   ERRNO_INVALID_AUTH_TOKEN,
   ERROR_NO_ACCOUNT,
   OAUTH_CLIENT_ID,
@@ -1189,10 +1188,7 @@ add_test(async function test_getOAuthTokenWithSessionToken() {
   ) => {
     oauthTokenCalled = true;
     Assert.equal(sessionTokenHex, "alice's session token");
-    Assert.equal(
-      clientId,
-      CLIENT_IS_THUNDERBIRD ? "8269bacd7bbc7f80" : "5882386c6d801776"
-    );
+    Assert.equal(clientId, "5882386c6d801776");
     Assert.equal(scope, "profile");
     Assert.equal(ttl, undefined);
     return MOCK_TOKEN_RESPONSE;

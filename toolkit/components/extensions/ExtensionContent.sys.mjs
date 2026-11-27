@@ -26,9 +26,7 @@ const lazy = XPCOMUtils.declareLazy({
   isContentScriptProcess: () =>
     Services.appinfo.processType === Services.appinfo.PROCESS_TYPE_CONTENT ||
     !WebExtensionPolicy.useRemoteWebExtensions ||
-    // Thunderbird still loads some content in the parent process.
-    AppConstants.MOZ_APP_NAME == "thunderbird",
-  orderedContentScripts: {
+    orderedContentScripts: {
     pref: "extensions.webextensions.content_scripts.ordered",
     default: true,
   },

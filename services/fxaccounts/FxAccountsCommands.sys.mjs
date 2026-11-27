@@ -3,7 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import {
-  CLIENT_IS_THUNDERBIRD,
   COMMAND_SENDTAB,
   COMMAND_SENDTAB_TAIL,
   COMMAND_CLOSETAB,
@@ -64,19 +63,17 @@ export class FxAccountsCommands {
   async availableCommands() {
     let commands = {};
 
-    if (!CLIENT_IS_THUNDERBIRD) {
-      // Invalid keys usually means the account is not verified yet.
-      const encryptedSendTabKeys = await this.sendTab.getEncryptedCommandKeys();
+    // Invalid keys usually means the account is not verified yet.
+    const encryptedSendTabKeys = await this.sendTab.getEncryptedCommandKeys();
 
-      if (encryptedSendTabKeys) {
-        commands[COMMAND_SENDTAB] = encryptedSendTabKeys;
-      }
+    if (encryptedSendTabKeys) {
+      commands[COMMAND_SENDTAB] = encryptedSendTabKeys;
+    }
 
-      const encryptedCloseTabKeys =
-        await this.closeTab.getEncryptedCommandKeys();
-      if (encryptedCloseTabKeys) {
-        commands[COMMAND_CLOSETAB] = encryptedCloseTabKeys;
-      }
+    const encryptedCloseTabKeys =
+      await this.closeTab.getEncryptedCommandKeys();
+    if (encryptedCloseTabKeys) {
+      commands[COMMAND_CLOSETAB] = encryptedCloseTabKeys;
     }
 
     return commands;

@@ -19,12 +19,7 @@ const EXTENSION_L10N_PATHS = [
   "branding/brand.ftl",
 ];
 
-// For Android, these strings are only used in tests. In the actual UI, the
-// warnings are in Android-Components, as explained in bug 1671453.
 const l10n = new Localization(EXTENSION_L10N_PATHS, true);
-
-// nativeMessaging is in PRIVILEGED_PERMS on Android.
-const IS_NATIVE_MESSAGING_PRIVILEGED = AppConstants.platform == "android";
 
 const { createAppInfo } = AddonTestUtils;
 
@@ -426,7 +421,6 @@ add_task(async function host_permissions() {
 // permissions and API permissions.
 add_task(async function api_permissions() {
   let manifestPermissions = await getManifestPermissions({
-    isPrivileged: IS_NATIVE_MESSAGING_PRIVILEGED,
     manifest: {
       permissions: [
         "activeTab",
@@ -476,22 +470,11 @@ add_task(async function nativeMessaging_permission() {
     },
   });
 
-  if (IS_NATIVE_MESSAGING_PRIVILEGED) {
-    // The behavior of nativeMessaging for unprivileged extensions on Android
-    // is covered in
-    // mobile/shared/components/extensions/test/xpcshell/test_ext_native_messaging_permissions.js
-    deepEqual(
-      manifestPermissions,
-      { origins: [], permissions: [], data_collection: [] },
-      "nativeMessaging perm ignored for unprivileged extensions on Android"
-    );
-  } else {
-    deepEqual(
-      manifestPermissions,
-      { origins: [], permissions: ["nativeMessaging"], data_collection: [] },
-      "nativeMessaging permission recognized for unprivileged extensions"
-    );
-  }
+  deepEqual(
+    manifestPermissions,
+    { origins: [], permissions: ["nativeMessaging"], data_collection: [] },
+    "nativeMessaging permission recognised for unprivileged extensions"
+  );
 });
 
 add_task(

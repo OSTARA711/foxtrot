@@ -6,9 +6,6 @@
 const { FxAccounts } = ChromeUtils.importESModule(
   "resource://gre/modules/FxAccounts.sys.mjs"
 );
-const { CLIENT_IS_THUNDERBIRD } = ChromeUtils.importESModule(
-  "resource://gre/modules/FxAccountsCommon.sys.mjs"
-);
 
 add_task(
   async function test_non_https_remote_server_uri_with_requireHttps_false() {
@@ -33,7 +30,7 @@ add_task(
     Assert.equal(url.searchParams.get("action"), "email");
     Assert.equal(
       url.searchParams.get("client_id"),
-      CLIENT_IS_THUNDERBIRD ? "8269bacd7bbc7f80" : "5882386c6d801776"
+      "5882386c6d801776"
     );
     Assert.equal(url.searchParams.get("response_type"), "code");
 
@@ -98,7 +95,7 @@ add_task(async function test_promise_account_service_param() {
   Assert.equal(url.searchParams.get("context"), "oauth_webchannel_v1");
   Assert.equal(
     url.searchParams.get("client_id"),
-    CLIENT_IS_THUNDERBIRD ? "8269bacd7bbc7f80" : "5882386c6d801776"
+    "5882386c6d801776"
   );
   Assert.equal(url.searchParams.get("service"), "custom-service");
   resetOauthConfig();

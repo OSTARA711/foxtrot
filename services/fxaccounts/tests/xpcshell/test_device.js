@@ -8,8 +8,6 @@ const { getFxAccountsSingleton } = ChromeUtils.importESModule(
 );
 const fxAccounts = getFxAccountsSingleton();
 
-const { CLIENT_IS_THUNDERBIRD, ON_NEW_DEVICE_ID, PREF_ACCOUNT_ROOT } =
-  ChromeUtils.importESModule("resource://gre/modules/FxAccountsCommon.sys.mjs");
 const { TestUtils } = ChromeUtils.importESModule(
   "resource://testing-common/TestUtils.sys.mjs"
 );
@@ -89,13 +87,8 @@ add_task(async function test_reset() {
   const notifyPromise = TestUtils.topicObserved(ON_NEW_DEVICE_ID);
   await fxAccounts._internal.setSignedInUser(credentials);
   await notifyPromise;
-  if (!CLIENT_IS_THUNDERBIRD) {
-    // Firefox fires the notification twice - once during `setSignedInUser` and
-    // once after it returns. It's the second notification we need to wait for.
-    // Thunderbird, OTOH, fires only once during `setSignedInUser` and that's
-    // what we need to wait for.
-    await TestUtils.topicObserved(ON_NEW_DEVICE_ID);
-  }
+  // Firefox fires the notification again after setSignedInUser returns.
+  await TestUtils.topicObserved(ON_NEW_DEVICE_ID);
   ok(!Services.prefs.prefHasUserValue(testPref));
   // signing the user out should reset the name pref.
   const namePref = PREF_ACCOUNT_ROOT + "device.name";

@@ -47,9 +47,7 @@ toolkit.jar:
    content/global/buildconfig.css
    content/global/contentAreaUtils.js
    content/global/datepicker.xhtml
-#ifndef MOZ_FENNEC
    content/global/editMenuOverlay.js
-#endif
    content/global/filepicker.properties
    content/global/customElements.js
    content/global/globalOverlay.js
@@ -64,9 +62,7 @@ toolkit.jar:
    content/global/TopLevelVideoDocument.js
    content/global/timepicker.xhtml
    content/global/treeUtils.js
-#ifndef MOZ_FENNEC
    content/global/viewZoomOverlay.js
-#endif
    content/global/widgets.css
    content/global/bindings/calendar.js         (widgets/calendar.js)
    content/global/bindings/datekeeper.js       (widgets/datekeeper.js)

@@ -29,8 +29,6 @@ const lazy = XPCOMUtils.declareLazy({
   isContentScriptProcess: () =>
     lazy.isContentProcess ||
     !WebExtensionPolicy.useRemoteWebExtensions ||
-    // Thunderbird still loads some content in the parent process.
-    AppConstants.MOZ_APP_NAME == "thunderbird",
 });
 
 import { ExtensionUtils } from "resource://gre/modules/ExtensionUtils.sys.mjs";

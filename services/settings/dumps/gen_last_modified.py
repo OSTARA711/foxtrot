@@ -1,3 +1,5 @@
+# File: services/settings/dumps/gen_last_modified.py
+
 #!/usr/bin/env python3
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -44,34 +46,13 @@ def main(output):
     The validity of the JSON file is verified through unit tests at
     services/settings/test/unit/test_remote_settings_dump_lastmodified.js
     """
-    # The following build targets currently use RemoteSettings dumps:
-    # Firefox               https://searchfox.org/mozilla-central/rev/94d6086481754e154b6f042820afab6bc9900a30/browser/installer/package-manifest.in#281-285        # NOQA: E501
-    # Firefox for Android   https://searchfox.org/mozilla-central/rev/94d6086481754e154b6f042820afab6bc9900a30/mobile/android/installer/package-manifest.in#88-91   # NOQA: E501
-    # Thunderbird           https://searchfox.org/comm-central/rev/89f957706bbda77e5f34e64e117e7ce121bb5d83/mail/installer/package-manifest.in#280-285              # NOQA: E501
-    # SeaMonkey             https://searchfox.org/comm-central/rev/89f957706bbda77e5f34e64e117e7ce121bb5d83/suite/installer/package-manifest.in#307-309             # NOQA: E501
-    assert buildconfig.substs["MOZ_BUILD_APP"] in (
-        "browser",
-        "mobile/android",
-        "mobile/ios",
-        "comm/mail",
-        "comm/suite",
-    ), (
+    # Firefox desktop uses Remote Settings dumps from this directory.
+    assert buildconfig.substs["MOZ_BUILD_APP"] == "browser", (
         "Cannot determine location of Remote Settings "
         f"dumps for platform {buildconfig.substs['MOZ_BUILD_APP']}"
     )
 
-    dumps_locations = []
-    if buildconfig.substs["MOZ_BUILD_APP"] == "browser":
-        dumps_locations += ["services/settings/dumps/"]
-    elif buildconfig.substs["MOZ_BUILD_APP"] == "mobile/android":
-        dumps_locations += ["services/settings/dumps/"]
-    elif buildconfig.substs["MOZ_BUILD_APP"] == "mobile/ios":
-        dumps_locations += ["services/settings/dumps/"]
-    elif buildconfig.substs["MOZ_BUILD_APP"] == "comm/mail":
-        dumps_locations += ["services/settings/dumps/"]
-        dumps_locations += ["comm/mail/app/settings/dumps/"]
-    elif buildconfig.substs["MOZ_BUILD_APP"] == "comm/suite":
-        dumps_locations += ["services/settings/dumps/"]
+    dumps_locations = ["services/settings/dumps/"]
 
     remotesettings_dumps = {}
     for dumps_location in dumps_locations:

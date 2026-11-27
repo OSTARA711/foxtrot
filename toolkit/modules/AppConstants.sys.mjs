@@ -204,46 +204,18 @@ export var AppConstants = Object.freeze({
   ENABLE_WEBDRIVER: @ENABLE_WEBDRIVER_BOOL@,
 
   REMOTE_SETTINGS_SERVER_URL:
-#ifdef MOZ_THUNDERBIRD
-    "https://thunderbird-settings.thunderbird.net/v1",
-#else
     "https://firefox.settings.services.mozilla.com/v1",
-#endif
 
   REMOTE_SETTINGS_VERIFY_SIGNATURE:
-#ifdef MOZ_THUNDERBIRD
-    false,
-#else
     true,
-#endif
 
   REMOTE_SETTINGS_DEFAULT_BUCKET:
-#ifdef MOZ_THUNDERBIRD
-    "thunderbird",
-#else
     "main",
-#endif
 
   MOZ_GLEAN_ANDROID: @MOZ_GLEAN_ANDROID_BOOL@,
 
   MOZ_JXL: @MOZ_JXL_BOOL@,
 
-#if defined(MOZ_THUNDERBIRD) || defined(MOZ_SUITE)
-  MOZ_CAN_FOLLOW_SYSTEM_TIME:
-#ifdef XP_WIN
-    true,
-#elif XP_MACOSX
-    true,
-#elif MOZ_WIDGET_GTK
-  #ifdef MOZ_ENABLE_DBUS
-    true,
-  #else
-    false,
-  #endif
-#else
-    false,
-#endif
-#endif
 
   MOZ_SYSTEM_POLICIES: @MOZ_SYSTEM_POLICIES_BOOL@,
 

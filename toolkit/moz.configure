@@ -1348,8 +1348,7 @@ set_config("CAIRO_FT_CFLAGS", ft2_info.cflags, when=enable_cairo_ft)
 # -----------------------------------------------------------
 #
 # Marionette is the Gecko remote protocol used for various remote control,
-# automation, and testing purposes throughout Gecko-based applications like
-# Firefox, Thunderbird, and any mobile browser built upon GeckoView.
+# automation, and testing purposes throughout Gecko-based applications like Firefox
 #
 # It also backs ../testing/geckodriver, which is Mozilla's WebDriver
 # implementation.
@@ -2177,7 +2176,7 @@ def bundled_fonts_default(target):
 
 @depends(build_project)
 def allow_bundled_fonts(project):
-    return project == "browser" or project == "comm/mail"
+    return project == "browser"
 
 
 option(

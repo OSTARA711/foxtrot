@@ -494,12 +494,7 @@ class MochitestServer:
         self._profileDir = options["profilePath"]
         self.webServer = options["webServer"]
         self.httpPort = options["httpPort"]
-        if options.get("remoteWebServer") == "10.0.2.2":
-            # probably running an Android emulator and 10.0.2.2 will
-            # not be visible from host
-            shutdownServer = "127.0.0.1"
-        else:
-            shutdownServer = self.webServer
+        shutdownServer = self.webServer
         self.shutdownURL = "http://%(server)s:%(port)s/server/shutdown" % {
             "server": shutdownServer,
             "port": self.httpPort,
@@ -748,30 +743,15 @@ class SSLTunnel:
                     "%s:%s:%s:%s\n" % (option, loc.host, loc.port, self.sslPort)
                 )
 
-    def buildConfig(self, locations, public=None):
+    def buildConfig(self, locations):
         """Create the ssltunnel configuration file"""
         configFd, self.configFile = tempfile.mkstemp(prefix="ssltunnel", suffix=".cfg")
         with os.fdopen(configFd, "w") as config:
             config.write("httpproxy:1\n")
             config.write("certdbdir:%s\n" % self.certPath)
             config.write("forward:127.0.0.1:%s\n" % self.httpPort)
-
-            wsserver = self.webServer
-            if self.webServer == "10.0.2.2":
-                wsserver = "127.0.0.1"
-
-            config.write("websocketserver:%s:%s\n" % (wsserver, self.webSocketPort))
-            # Use "*" to tell ssltunnel to listen on the public ip
-            # address instead of the loopback address 127.0.0.1. This
-            # may have the side-effect of causing firewall warnings on
-            # macOS and Windows. Use "127.0.0.1" to listen on the
-            # loopback address.  Remote tests using physical or
-            # emulated Android devices must use the public ip address
-            # in order for the sslproxy to work but Desktop tests
-            # which run on the same host as ssltunnel may use the
-            # loopback address.
-            listen_address = "*" if public else "127.0.0.1"
-            config.write("listen:%s:%s:pgoserver\n" % (listen_address, self.sslPort))
+            config.write("websocketserver:%s:%s\n" % (self.webServer, self.webSocketPort))
+            config.write("listen:127.0.0.1:%s:pgoserver\n" % self.sslPort)
 
             for loc in locations:
                 if loc.scheme == "https" and "nocert" not in loc.options:
@@ -956,7 +936,6 @@ class MochitestDesktop:
     TEST_PATH = "tests"
     CHROME_PATH = "redirect.html"
 
-    certdbNew = False
     sslTunnel = None
     DEFAULT_TIMEOUT = 60.0
     mediaDevices = None
@@ -1440,7 +1419,7 @@ class MochitestDesktop:
         if port != options.dohServerPort:
             raise RuntimeError("Error: Unable to start DoH server")
 
-    def startServers(self, options, debuggerInfo, public=None):
+    def startServers(self, options, debuggerInfo):
         # start servers and set ports
         # TODO: pass these values, don't set on `self`
         self.webServer = options.webServer
@@ -1464,7 +1443,7 @@ class MochitestDesktop:
 
         # start SSL pipe
         self.sslTunnel = SSLTunnel(options, logger=self.log)
-        self.sslTunnel.buildConfig(self.locations, public=public)
+        self.sslTunnel.buildConfig(self.locations)
         self.sslTunnel.start()
 
         # If we're lucky, the server has fully started by now, and all paths are
@@ -2190,12 +2169,7 @@ toolbar#nav-bar {
             # Disable race checking when running these tools
             toolsEnv["TSAN_OPTIONS"] = "report_bugs=0"
 
-        if self.certdbNew:
-            # android uses the new DB formats exclusively
-            certdbPath = "sql:" + options.profilePath
-        else:
-            # desktop seems to use the old
-            certdbPath = options.profilePath
+        certdbPath = options.profilePath
 
         # certutil.exe depends on some DLLs in the app directory
         # When running tests against an MSIX-installed Firefox, these DLLs
