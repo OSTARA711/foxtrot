@@ -31,42 +31,124 @@ Shared Mozilla code should be retained where it is genuinely required by the Lin
 
 ## 2. Repository state and review limitations
 
-The audit began with commit `d429867af0` and has subsequently been
-extended to cover the committed cleanup through:
+This audit now records the committed source cleanup, subsequent Android
+and Thunderbird work, and the first successful Linux desktop build and
+runtime validation.
 
-`4e270fde415364964912c5e88e110fa8041e1788`
+The latest locally reviewed commit is:
 
-The latest observed repository commit on `main` is `4e270fde41`.
+`e68444c7d6` — Fix JavaScript syntax after platform cleanup
 
-The Thunderbird and Mochitest cleanup was committed in two stages:
-
-- `cd01d06b84` — Remove Android and Thunderbird Mochitest support.
-- `4e270fde41` — Remove Thunderbird-specific code paths.
-
-The latest commit also contains Android-related changes. Those changes are
-not all part of the Thunderbird cleanup.
-
-The original GeckoView and Android desktop cleanup was committed in `821e313534`. Subsequent commits extended the removal to Android build tooling, audio backends, performance infrastructure, accessibility, compositor-controller and HardwareBuffer implementations.
-
-The relevant cleanup commits include:
+The relevant committed changes include:
 
 - `821e313534` — Remove GeckoView and Android-only desktop build paths.
-- `9a4d014353` — Remove the root Taskcluster directory and its Taskgraph implementation.
+- `9a4d014353` — Remove the root Taskcluster directory and Taskgraph implementation.
 - `04f050adfe` — Remove Android cubeb audio backends.
 - `4c8f408406` — Remove Android NDK configuration and bootstrap support.
 - `512a1eb07f` — Remove Android performance profiling and startup benchmarks.
 - `707aafab05` — Improve local Raptor performance testing.
 - `6ab711feb9` — Remove remaining Android-only platform code.
+- `cd01d06b84` — Remove Android and Thunderbird Mochitest support.
+- `879adb0385` — Remove remaining Thunderbird build and Python support.
+- `81cc0029aa` — Remove remaining Thunderbird code paths and fix build issues.
+- `e68444c7d6` — Fix JavaScript syntax after platform cleanup.
 
-These changes are committed to `main`. This document does not assert that the local working tree is clean; that must be checked independently.
+The last three commits include the Thunderbird-specific cleanup, build
+corrections and JavaScript syntax corrections. The latest local commit
+is not necessarily the latest commit published on GitHub. This audit
+does not push or modify the remote repository.
 
-No full Linux x86_64 build or test run is established by this audit.
+### Build and package validation
 
-No full Linux ARM64 build or test run is established by this audit.
+A complete Linux x86_64 build succeeded on Debian 13 on 28 November 2026.
 
-No successful package build or runtime validation is claimed.
+The build completed with approximately 115 compiler warnings, none of
+which prevented successful completion.
 
-The review is based on committed source changes, targeted searches, build configuration inspection and dependency tracing. Source-level inspection does not replace compiler, linker, packaging or runtime validation.
+`./mach package` also succeeded and produced:
+
+`obj-x86_64-pc-linux-gnu/dist/firefox-153.7.0.en-US.linux-x86_64.tar.xz`
+
+The resulting package was installed locally under `/opt/foxtrot`.
+The installed executable's shared-library dependencies were checked;
+`ldd` reported no missing libraries.
+
+The package still used Firefox application branding at this stage.
+This was expected and was not a functional build failure.
+
+### Runtime validation
+
+The installed browser was launched with a separate test profile.
+
+The following functionality was exercised successfully:
+
+- Browser window launch, normal closing and navigation.
+- CNN, Le Monde and YouTube page rendering.
+- YouTube Shorts video and audio playback.
+- DRM activation and plugin management notification.
+- Page translation.
+- Cookie banners.
+- Bookmark creation, folders and reopening bookmarks in tabs.
+- PDF display, including a downloaded PDF and a local PDF.
+- Private browsing.
+- HTTPS-Only Mode, including successful HTTPS navigation and rejection
+  of an HTTP-only test destination.
+- Session restoration after restarting the browser.
+- Captive portal reconnection.
+- Installation and operation of the Awesome Screenshot extension.
+
+These are manual functional checks, not a complete browser test suite.
+External website scripts also produced console warnings that did not
+prevent the tested functionality.
+
+### JavaScript syntax corrections
+
+Three source syntax defects were corrected and committed in
+`e68444c7d6`:
+
+- `browser/components/BrowserGlue.sys.mjs` — removed an extra closing
+  brace left after removal of a Windows-only branch.
+- `toolkit/components/extensions/ExtensionProcessScript.sys.mjs` —
+  corrected a dangling logical OR left after removal of Thunderbird
+  fallback logic.
+- `toolkit/components/extensions/ExtensionContent.sys.mjs` — corrected
+  a similar dangling logical OR and its indentation.
+
+All three files passed Node.js syntax checks using the local Mozilla
+Node.js installation. `git diff --check` also passed.
+
+The first two corrections were included in the package used for the
+subsequent browser runtime checks. The third correction was committed
+and syntax-checked afterwards; it had not yet been included in a
+repackaged browser during those runtime checks.
+
+### Targeted test validation
+
+The following targeted Python test passed:
+
+`./mach python-test python/mozbuild/mozbuild/test/test_artifacts.py`
+
+Result: 7 tests passed. The test harness emitted warnings concerning
+`TestResult.addDuration`, but no test failures occurred.
+
+The following Python syntax checks also passed:
+
+`python3 -m py_compile python/mozbuild/mozbuild/action/dumpsymbols.py python/mozbuild/mozbuild/artifact_commands.py`
+
+No complete test-suite result is claimed.
+
+### Remaining validation limitations
+
+- No Linux ARM64 build has yet been established.
+- No complete Mozilla or Foxtrot test-suite execution is claimed.
+- The latest `ExtensionContent.sys.mjs` correction still requires inclusion
+  in a new package and runtime verification.
+- The successful x86_64 build and package do not establish release readiness.
+- The browser has not yet completed its final branding and distribution work.
+
+The audit distinguishes source-level inspection, targeted tests, successful
+compilation, package creation and manual runtime checks. These are separate
+levels of validation and must not be conflated.
 
 ## 3. GeckoView History removal
 
@@ -349,7 +431,18 @@ The removal of the Android startup benchmark suite does not imply that all Andro
 - Removed its Docker images, task definitions, scripts, tests and documentation.
 - Unregistered the directory from the root `moz.build` configuration.
 
-This was a broader build-infrastructure removal, not exclusively an Android cleanup.
+**Status: intentional and complete.**
+
+Taskcluster was deliberately removed from Foxtrot as part of the project's
+build-infrastructure cleanup. Its absence is expected. It is not an
+incomplete checkout, missing dependency or unresolved build-graph problem.
+
+This audit does not investigate restoring Taskcluster, reconstructing its
+job graph or determining whether Taskcluster jobs are scheduled.
+
+Remaining Android test runners and mozharness configurations are assessed
+according to their tracked source dependencies and remaining consumers,
+not according to Taskcluster scheduling.
 
 #### Local Raptor performance testing — `707aafab05`
 
@@ -501,21 +594,155 @@ selection and behaviour.
 
 #### Validation status
 
-The committed source changes were inspected. Targeted searches in
-`services/fxaccounts/` found no remaining `CLIENT_IS_THUNDERBIRD` references,
-Thunderbird OAuth client ID or Thunderbird Sync scope. Thunderbird-specific
-test exclusions were removed from the FxAccounts test manifest.
+The Thunderbird-specific source changes were reviewed and committed
+through `81cc0029aa`.
 
-This does not establish that every Thunderbird reference has been removed from
-the entire repository. Remaining matches must be assessed individually,
-distinguishing obsolete application code from shared Mozilla infrastructure,
-historical comments, documentation and unrelated test data.
+The earlier targeted test:
 
-The latest commit also contains Android cleanup. Its entire changed-file list
-must not be attributed to Thunderbird removal.
+`./mach python-test python/mozbuild/mozbuild/test/test_artifacts.py`
 
-No successful full Linux build or complete test-suite execution is claimed
-for these changes.
+passed all 7 tests. Python syntax checks for the modified mozbuild
+modules also passed.
+
+The subsequent Linux x86_64 build and package succeeded. The browser
+was installed and manually exercised. These results are recorded in
+Section 2.
+
+This does not establish that every Thunderbird reference has been
+removed from the repository. Remaining matches must be assessed
+individually, distinguishing obsolete application code from shared
+Mozilla infrastructure, historical comments, documentation and
+unrelated test data.
+
+The latest commit `e68444c7d6` also contains JavaScript syntax fixes.
+The entire changed-file list must not be attributed to Thunderbird removal.
+
+### 10.11 Android Mochitest and mozharness audit
+
+The Android test infrastructure has been examined separately from the
+removal of Taskcluster.
+
+#### Mochitest command and options
+
+The Mach entry point has already been restricted to Firefox:
+
+- `testing/mochitest/mach_commands.py` uses
+  `SUPPORTED_APPS = ["firefox"]`.
+- Android and GeckoView JUnit command registration, dispatch and
+  device-verification paths were removed.
+- `testing/mochitest/mochitest_options.py` no longer exposes the
+  removed Android command-line and device-install options.
+- Android-specific `moznetwork` handling was removed from the options layer.
+
+Codex also identified a remaining Android application-validation
+bypass around `testing/mochitest/mochitest_options.py` lines 989–990.
+This is a residual candidate that must be checked against the current
+local source before it is removed. It should not be confused with the
+Android command-line and device options already removed.
+
+The shared Linux desktop Mochitest command, parser, runner and package
+infrastructure remain.
+
+#### Remaining Android-specific Mochitest code
+
+Codex identified the following remaining candidates:
+
+- `testing/mochitest/api.js`
+  - Android-only `windowTracker`, `androidStartup()` and related
+    startup/shutdown branches remain.
+  - The file is staged through the Mochitest build configuration.
+  - Its remaining consumers should be checked before removal.
+- `testing/mochitest/runtests.py`
+  - Android chunk-runtime manifest handling remains.
+  - Android-specific `sessionHistoryInParent` default handling remains.
+  - Android emulator metadata is still added to test metadata.
+- `testing/mochitest/setup.js`
+  - Contains a legacy Android 4.0/Fennec `runSlower` workaround.
+  - Active callers should be checked before removing it.
+- `testing/mochitest/SimpleTest.js`
+  - `getAndroidSdk()` remains a candidate for removal after checking
+    its callers.
+  - `getTestFileURL()` is shared and must not be removed merely because
+    its comments mention Android.
+- Shared WebSocket and SSL tunnel listeners remain required by the
+  common runner. Android-related comments do not make those listeners
+  Android-only.
+- Android-specific test conditions and workarounds remain in shared
+  test infrastructure, including `test_SpecialPowersSandbox.js`,
+  `test_sanityEventUtils.html` and `mochitest.toml`. Their conditions
+  should be reviewed after the Android runners and metadata are retired.
+- `testing/mochitest/moz.build` retains an Android conditional around
+  extension staging. Codex found no tracked source XPI files under the
+  corresponding `testing/mochitest/extensions/` path. The conditional
+  should be assessed against the actual staged files and consumers
+  before removal.
+
+The remaining references are not all equivalent. Shared runner behaviour,
+comments, test fixtures and genuinely Android-only branches must be
+distinguished.
+
+#### Android Mochitest and reftest runners
+
+Codex established that:
+
+- `testing/mozharness/mozharness/mozilla/testing/android.py` is still
+  imported by tracked tooling.
+- `testing/mozharness/configs/android/android_common.py` defines
+  Android Mochitest and GeckoView JUnit suites.
+- Android emulator and hardware unittest runners still select Android
+  test suites.
+- `tools/tryselect/test/test_mozharness_integration.py` still contains
+  an Android emulator mapping.
+- Android profile-generation configurations and Android PGO
+  configuration remain tracked candidates for removal.
+- `layout/tools/reftest/remotereftest.py` is tracked and shared;
+  it must not be confused with the absent Mochitest `runtestsremote.py`.
+- `testing/mochitest/runtestsremote.py` and `runjunit.py` are not
+  present as tracked files.
+- `testing/mochitest/manifests/emulator-jb.toml` contains only
+  commented-out entries.
+
+The Android emulator and hardware runners and their configurations
+should be removed in coordinated changes, with their remaining tracked
+consumers and documentation addressed at the same time.
+
+#### Shared Android mozharness module — retain
+
+`testing/mozharness/mozharness/mozilla/testing/android.py` must not
+be deleted as an isolated Android cleanup.
+
+Codex identified tracked imports from:
+
+- `testing/mozharness/mozharness/mozilla/testing/raptor.py`
+- `testing/mozharness/scripts/web_platform_tests.py`
+- `testing/mozharness/scripts/android_emulator_pgo.py`
+- `testing/mozharness/scripts/android_emulator_unittest.py`
+- `testing/mozharness/scripts/android_hardware_unittest.py`
+- `testing/mozharness/scripts/android_wrench.py`
+
+Raptor and Web Platform Tests use the shared `AndroidMixin` in
+classes that also support non-Android operation. Removing the module
+without first refactoring those consumers would break retained tooling.
+
+The Android-specific consumers can be retired separately. The shared
+module should only be reconsidered after its remaining non-Android
+dependencies have been removed or refactored.
+
+#### Other Android mozharness dependencies
+
+- `testing/mozharness/configs/android/wrench.py` remains consumed by
+  `gfx/wr/wrench/android.txt`; retain it until the Android Wrench
+  workflow and its instructions are retired together.
+- Android PGO configuration and its emulator runner require a paired
+  review.
+- Android profile-generation configurations have no tracked consumer
+  identified by Codex. This is evidence of no tracked consumer found,
+  not proof that no manual invocation exists.
+- Android emulator build documentation and runners are separate from
+  the Android emulator unittest runner and need their own review.
+
+The absence of Taskcluster does not change these dependency findings.
+No Taskcluster restoration or scheduling investigation is required.
 
 ## 11. Remaining work
 
@@ -523,32 +750,93 @@ The following work remains outstanding:
 
 1. Complete the repository-wide `mobile/` reference audit.
 2. Complete the separate `widget/android/` dependency audit.
-3. Review and remove the remaining Android dynamic-toolbar IPC and cached-state paths, preserving shared desktop compositor and viewport functionality.
-4. Remove remaining Android Java PiP and keyboard callbacks as part of the mobile-product cleanup, then regenerate and verify generated bindings.
-5. Continue auditing Android-specific compositor messages, screen-pixel paths and cached state after removal of the UI compositor controller.
-6. Review remaining Android build configuration, test infrastructure and platform-specific references after the NDK, audio and performance cleanup.
+3. Review and remove the remaining Android dynamic-toolbar IPC and
+   cached-state paths while preserving shared desktop compositor and
+   viewport functionality.
+4. Remove remaining Android Java PiP and keyboard callbacks as part
+   of the mobile-product cleanup, then regenerate and verify generated
+   bindings where required.
+5. Continue auditing Android-specific compositor messages, screen-pixel
+   paths and cached state after removal of the UI compositor controller.
+6. Review remaining Android build configuration, test infrastructure
+   and platform-specific references.
 7. Audit `hal/android/` and its remaining consumers.
-8. Review remaining Android accessibility references after deletion of `accessible/android/`.
-9. Complete clean Linux x86_64 and ARM64 builds.
-10. Run relevant test suites and packaging checks.
-11. Review the complete cumulative source changes before declaring the platform cleanup complete.
-12. Complete a repository-wide Thunderbird reference audit. Inspect remaining
-    `thunderbird`, `MOZ_THUNDERBIRD`, `comm/mail` and application-name matches.
-    Remove obsolete Thunderbird-specific code while retaining genuinely shared
-    Gecko infrastructure and unrelated historical references where appropriate.
+8. Review remaining Android accessibility references after deletion
+   of `accessible/android/`.
+9. Continue the Android Mochitest cleanup described in Section 10.11,
+   including the remaining `api.js`, `runtests.py` and validation bypass.
+10. Remove Android-only emulator/hardware test runners and configurations
+    in coordinated changes, including their documentation and tracked
+    consumers.
+11. Review the Android PGO and Wrench workflows and their paired
+    configuration dependencies.
+12. Complete a repository-wide audit of remaining Android and mobile
+    references without deleting shared desktop code.
+13. Complete a clean Linux ARM64 build.
+14. Repackage and runtime-test the latest JavaScript syntax corrections,
+    including `ExtensionContent.sys.mjs`.
+15. Run relevant test suites and packaging checks.
+16. Complete final branding and distribution work.
+17. Review the complete cumulative source changes before declaring the
+    platform cleanup complete.
 
+Taskcluster removal is complete and intentional. It is not an outstanding
+task.
+
+The Thunderbird-specific cleanup described in this audit has progressed
+through commit `81cc0029aa`. Remaining Thunderbird references should be
+reviewed individually; a repository-wide match is not automatically
+evidence of an obsolete Thunderbird dependency.
 
 ## 12. Validation and security claims
 
-The original cleanup recorded a clean `git diff --check` result at the time of its working-tree inspection. That historical result is not a validation of all subsequent commits or the current working tree.
+Validation evidence must be interpreted according to what was actually
+performed.
 
-The commits recorded by this audit represent source-level changes. They do not establish successful compilation, linking, packaging or runtime operation.
+### Established
 
-Local Raptor and Talos performance-testing infrastructure was improved in commit `707aafab05`. This work does not establish that Foxtrot itself has been built or benchmarked successfully.
+- A complete Linux x86_64 build succeeded on Debian 13 on
+  28 November 2026.
+- `./mach package` successfully produced the ESR 153.7.0 Linux
+  x86_64 archive.
+- The archive was installed locally and the browser launched.
+- Manual browser checks established working navigation, rendering,
+  media playback, PDF display, bookmarks, private browsing,
+  HTTPS-Only Mode, session restoration, captive portal reconnection
+  and extension installation.
+- The targeted mozbuild artifact test passed: 7 tests.
+- The relevant Python modules passed `py_compile`.
+- The three modified JavaScript files passed Node.js syntax checks.
+- `git diff --check` passed during the source validation.
 
-No successful full Linux x86_64 build, Linux ARM64 build, complete test suite or package build is claimed here.
+### Not established
 
-This audit does not claim that ESR153 security patches have been migrated to the ESR140.16.0 baseline. Any such migration must be assessed individually against the actual source changes and Foxtrot product requirements. No security fix should be considered migrated without source-level evidence.
+- A Linux ARM64 build.
+- A complete Mozilla or Foxtrot test-suite run.
+- Release readiness.
+- Runtime verification of the third JavaScript correction in a
+  newly packaged browser.
+- Final Foxtrot branding and distribution integration.
+- A complete repository-wide removal of every Android, mobile or
+  Thunderbird reference.
+
+The successful x86_64 build and package are significant validation
+milestones, but they do not replace the remaining architecture,
+test-suite and runtime checks.
+
+The compiler emitted warnings during the successful build. They did
+not prevent the build from completing. They should not be described
+as build failures.
+
+Local Raptor and Talos performance-testing infrastructure was improved
+in commit `707aafab05`. This does not establish that Foxtrot itself has
+completed a formal performance benchmark.
+
+This audit does not claim that ESR153 security patches have been
+migrated to the ESR140.16.0 baseline. Any such migration must be
+assessed individually against the actual source changes and Foxtrot
+product requirements. No security fix should be considered migrated
+without source-level evidence.
 
 ## 13. Historical changed-file inventory
 
