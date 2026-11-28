@@ -102,8 +102,7 @@ def _make_artifacts(
     if conditions.is_git(command_context):
         git = command_context.substs["GIT"]
 
-    # If we're building Thunderbird, we should be checking for comm-central artifacts.
-    topsrcdir = command_context.substs.get("commtopsrcdir", command_context.topsrcdir)
+    topsrcdir = command_context.topsrcdir
 
     if download_maven_zip:
         if download_tests:

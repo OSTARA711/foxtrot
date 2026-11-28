@@ -2589,10 +2589,8 @@ bool nsFrameLoader::TryRemoteBrowserInternal() {
   // out of process iframes also get to skip this check.
   if (!XRE_IsContentProcess()) {
     if (parentDocShell->ItemType() != nsIDocShellTreeItem::typeChrome) {
-      // Allow three exceptions to this rule :
+      // Allow these exceptions to this rule:
       // - about:addons so it can load remote extension options pages
-      // - about:preferences (in Thunderbird only) so it can load remote
-      //     extension options pages for FileLink providers
       // - DevTools webext panels if DevTools is loaded in a content frame
       // - DevTools Network Monitor, which uses content frame for HTML request
       // previews
@@ -2616,11 +2614,6 @@ bool nsFrameLoader::TryRemoteBrowserInternal() {
         const nsLiteralCString kAllowedURIs[] = {
             "about:addons"_ns,
             "chrome://mozapps/content/extensions/aboutaddons.html"_ns,
-#ifdef MOZ_THUNDERBIRD
-            "about:3pane"_ns,
-            "about:message"_ns,
-            "about:preferences"_ns,
-#endif
             "chrome://browser/content/webext-panels.xhtml"_ns,
             "chrome://devtools/content/netmonitor/index.html"_ns,
             "chrome://devtools/content/webconsole/index.html"_ns,

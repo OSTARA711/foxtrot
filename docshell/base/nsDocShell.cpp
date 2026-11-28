@@ -9821,13 +9821,6 @@ bool nsDocShell::CanLoadInParentProcess(nsIURI* aURI) {
        uri->SchemeIs("moz-extension"))) {
     return true;
   }
-#ifdef MOZ_THUNDERBIRD
-  if (uri->SchemeIs("imap") || uri->SchemeIs("mailbox") ||
-      uri->SchemeIs("news") || uri->SchemeIs("nntp") ||
-      uri->SchemeIs("snews") || uri->SchemeIs("x-moz-ews")) {
-    return true;
-  }
-#endif
   nsAutoCString scheme;
   uri->GetScheme(scheme);
   // Allow ext+foo URIs (extension-registered custom protocols). See

@@ -1922,8 +1922,6 @@ void nsContentSecurityUtils::AssertChromePageHasCSP(Document* aDocument) {
       return;
     }
 
-    // Thunderbird's CSP does not pass these checks.
-#  ifndef MOZ_THUNDERBIRD
     const nsCSPPolicy* policy =
         static_cast<nsCSPContext*>(csp.get())->GetPolicy(0);
     {
@@ -1965,7 +1963,6 @@ void nsContentSecurityUtils::AssertChromePageHasCSP(Document* aDocument) {
           "%s",
           spec.get(), NS_ConvertUTF16toUTF8(dir).get());
     }
-#  endif
     return;
   }
 

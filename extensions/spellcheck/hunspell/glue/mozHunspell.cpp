@@ -552,18 +552,6 @@ NS_IMETHODIMP mozHunspell::RemoveDirectory(nsIFile* aDir) {
   mDynamicDirectories.RemoveObject(aDir);
   LoadDictionaryList(true);
 
-#ifdef MOZ_THUNDERBIRD
-  /*
-   * This notification is needed for Thunderbird. Thunderbird derives the
-   * dictionary from the document's "lang" attribute. If a dictionary is
-   * removed, we need to change the "lang" attribute.
-   */
-  nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
-  if (obs) {
-    obs->NotifyObservers(nullptr, SPELLCHECK_DICTIONARY_REMOVE_NOTIFICATION,
-                         nullptr);
-  }
-#endif
   return NS_OK;
 }
 
