@@ -855,7 +855,6 @@ BrowserGlue.prototype = {
     ) {
       this._resetProfileNotification("unused");
     }
-    }
   },
 
   /**

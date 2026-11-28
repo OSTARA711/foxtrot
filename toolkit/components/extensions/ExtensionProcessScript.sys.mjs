@@ -28,7 +28,7 @@ const lazy = XPCOMUtils.declareLazy({
     Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT,
   isContentScriptProcess: () =>
     lazy.isContentProcess ||
-    !WebExtensionPolicy.useRemoteWebExtensions ||
+    !WebExtensionPolicy.useRemoteWebExtensions,
 });
 
 import { ExtensionUtils } from "resource://gre/modules/ExtensionUtils.sys.mjs";

@@ -25,8 +25,8 @@ const lazy = XPCOMUtils.declareLazy({
   },
   isContentScriptProcess: () =>
     Services.appinfo.processType === Services.appinfo.PROCESS_TYPE_CONTENT ||
-    !WebExtensionPolicy.useRemoteWebExtensions ||
-    orderedContentScripts: {
+    !WebExtensionPolicy.useRemoteWebExtensions,
+  orderedContentScripts: {
     pref: "extensions.webextensions.content_scripts.ordered",
     default: true,
   },
